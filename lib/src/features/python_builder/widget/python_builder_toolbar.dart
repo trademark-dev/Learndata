@@ -40,6 +40,23 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
     'Variables',
   ];
 
+  Widget _buildDraggable({
+    required String data,
+    required Widget Function() builder,
+  }) {
+    final Widget chip = builder();
+    return LongPressDraggable<String>(
+      data: data,
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      feedback: _PythonDragFeedbackChip(label: data),
+      childWhenDragging: Opacity(
+        opacity: 0.35,
+        child: chip,
+      ),
+      child: chip,
+    );
+  }
+
   Widget _buildTabItem(String tabName, int index) {
     final isActive = _selectedTabIndex == index;
     return GestureDetector(
@@ -191,61 +208,68 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
   }
 
   Widget _buildClauseItem(String label) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(50.r),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0x99232834), // #23283499
-            borderRadius: BorderRadius.circular(50.r),
-            border: Border.all(
-              width: 1,
-              color: const Color(0xFFE5E6EB).withOpacity(0.101), // #E5E6EB1A
+    Widget buildContent() {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(50.r),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0x99232834), // #23283499
+              borderRadius: BorderRadius.circular(50.r),
+              border: Border.all(
+                width: 1,
+                color: const Color(0xFFE5E6EB).withOpacity(0.101), // #E5E6EB1A
+              ),
             ),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(6.w),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontFamily: 'Geist Mono',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12.sp,
-                    height: 15 / 12,
-                    color: const Color(0xFFB9B9B9), // #B9B9B9
-                  ),
-                ),
-                SizedBox(width: 6.w),
-                Container(
-                  width: 18.w,
-                  height: 18.h,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF141F2A), // #141F2A
-                    borderRadius: BorderRadius.circular(50.r),
-                    border: Border.all(
-                      width: 1,
-                      color: const Color(0xFF586067), // #586067
+            child: Padding(
+              padding: EdgeInsets.all(6.w),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'Geist Mono',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.sp,
+                      height: 15 / 12,
+                      color: const Color(0xFFB9B9B9), // #B9B9B9
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xCC000000), // #000000CC
-                        offset: const Offset(0, 0),
-                        blurRadius: 4,
-                        spreadRadius: 0,
-                        blurStyle: BlurStyle.inner,
-                      ),
-                    ],
                   ),
-                ),
-              ],
+                  SizedBox(width: 6.w),
+                  Container(
+                    width: 18.w,
+                    height: 18.h,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF141F2A), // #141F2A
+                      borderRadius: BorderRadius.circular(50.r),
+                      border: Border.all(
+                        width: 1,
+                        color: const Color(0xFF586067), // #586067
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xCC000000), // #000000CC
+                          offset: const Offset(0, 0),
+                          blurRadius: 4,
+                          spreadRadius: 0,
+                          blurStyle: BlurStyle.inner,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
+      );
+    }
+
+    return _buildDraggable(
+      data: label,
+      builder: buildContent,
     );
   }
 
@@ -440,37 +464,50 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
   }
 
   Widget _buildHeaderContent() {
+    final bool undoEnabled = widget.onUndo != null;
+    final bool redoEnabled = widget.onRedo != null;
+
     return Row(
       children: [
         // Left section - Undo and Redo icons
         GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            widget.onUndo?.call();
-          },
-          child: SvgPicture.asset(
-            AppIcons.undowicon,
-            width: 20.w,
-            height: 20.h,
-            colorFilter: const ColorFilter.mode(
-              AppColors.white,
-              BlendMode.srcIn,
+          onTap: undoEnabled
+              ? () {
+                  HapticFeedback.lightImpact();
+                  widget.onUndo?.call();
+                }
+              : null,
+          child: Opacity(
+            opacity: undoEnabled ? 1.0 : 0.35,
+            child: SvgPicture.asset(
+              AppIcons.undowicon,
+              width: 20.w,
+              height: 20.h,
+              colorFilter: const ColorFilter.mode(
+                AppColors.white,
+                BlendMode.srcIn,
+              ),
             ),
           ),
         ),
         SizedBox(width: 8.w),
         GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            widget.onRedo?.call();
-          },
-          child: SvgPicture.asset(
-            AppIcons.redoIcon,
-            width: 20.w,
-            height: 20.h,
-            colorFilter: const ColorFilter.mode(
-              AppColors.white,
-              BlendMode.srcIn,
+          onTap: redoEnabled
+              ? () {
+                  HapticFeedback.lightImpact();
+                  widget.onRedo?.call();
+                }
+              : null,
+          child: Opacity(
+            opacity: redoEnabled ? 1.0 : 0.35,
+            child: SvgPicture.asset(
+              AppIcons.redoIcon,
+              width: 20.w,
+              height: 20.h,
+              colorFilter: const ColorFilter.mode(
+                AppColors.white,
+                BlendMode.srcIn,
+              ),
             ),
           ),
         ),
@@ -618,6 +655,54 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PythonDragFeedbackChip extends StatelessWidget {
+  final String label;
+
+  const _PythonDragFeedbackChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12.r),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF4BEDC2),
+              Color(0xFF67A6FF),
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0B253C).withOpacity(0.55),
+              blurRadius: 16,
+              offset: const Offset(0, 10),
+            ),
+          ],
+          border: Border.all(
+            color: Colors.white.withOpacity(0.35),
+            width: 1.2,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontWeight: FontWeight.w600,
+            fontSize: 14.sp,
+            letterSpacing: 0.5,
+            color: Colors.white,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,0 +1,144 @@
+SQL Builder – Overview and High-Level Goals
+The SQL Builder interface is designed as an interactive, drag-and-drop learning environment that teaches users how to construct SQL queries. The goal is to provide a hands-on, visual interface where blocks represent SQL clauses, operators, and functions, and query structure is strictly enforced to guide learning without letting formatting errors interfere. Users build queries step by step, receiving runtime feedback on logical or syntax errors, while the system handles formatting and validation automatically.
+
+Guiding Implementation Principles
+These are the technical implementation principles that I aimed to capture and specify in the rest of this document. If any decision was not made in this document, or there are confusing or contradictory requirements, please use these guiding principles as the ultimate source of truth.
+1. The user should be able to access, drag, and drop SQL operators quickly and efficiently
+2. Code should be automatically formatted correctly and stay out of the way of the user -  formatting is useful to learning
+3. The container outlines of tiles are intended to supplement the learning of the student, and are secondary to the formatting of the code - though the formatting will naturally define the boundary of the containers
+4. The user shouldn’t be forced into correct syntax; the container outlines support in guiding the user to the right syntax, but tiles should be able to be placed in any place and in any order
+5. The drag and drop experience should be smooth, and act predictably and intuitively - adjacent tiles and lines of code should shift to their appropriate locations smoothly
+6. Code execution should feel fun and fluid; integrated seamlessly into the SQL builder experience
+
+1. Operator Classes & Tabs
+To simplify navigation and support learning, all available SQL blocks are organized into operator classes. These classes help users mentally locate blocks by type, while each tab presents blocks appropriate to that category. Operator class descriptions provide developer guidance on block behavior, placement rules, allowed children, forbidden children, and interaction patterns.
+Examples of operator classes for tab organization:
+Clauses: SELECT, FROM, WHERE, GROUP BY, ORDER BY, HAVING, LIMIT/TOP, DISTINCT
+Columns / Tables / Literals
+Logical / Comparison Operators
+Aggregation / Arithmetic Operators
+CASE / Conditional Blocks
+Joins / Relationships
+Parentheses / Subqueries
+Aliases (AS)
+Inline / Misc Functions
+Each class defines the specific rules of interaction with other classes and containers, guiding the developer in implementing consistent behaviors across the interface.
+
+2. User Story / Interaction Model
+The student starts on a blank canvas, with no pre-populated blocks.
+Blocks are drag-and-drop only; users do not type SQL.
+Queries are built visually, with containers automatically expanding and formatting content as it is placed.
+Users can place blocks out of order, but the system only validates execution at runtime, providing educational error messages.
+Container blocks like CASE, JOIN, Aggregations, Parentheses visually expand as blocks are added and enforce logical nesting rules.
+The system handles alias generation, numeric and type validation, and multi-level nesting automatically.
+Users navigate the palette using category tabs to find blocks logically grouped by their function or type.
+
+3. Core Mechanics
+Block Behavior: Blocks can be placed in valid containers, moved, or deleted. Containers auto-expand; operators snap horizontally, but vertical placement is freeform.
+Containers & Structural Blocks: CASE, JOIN, Aggregation, Parentheses, AS, Subquery each have unique placement rules, required children, and runtime constraints.
+Execution & Validation: Queries compile to valid SQL strings; type errors or structural errors produce educational feedback.
+Visual Rules: Containers have distinct colors; blocks are auto-formatted with SQL conventions for readability.
+Constraints & Safeguards: Exactly one SELECT and FROM per query; duplicates disallowed; reserved slots cannot be bypassed; nesting supported up to a defined depth (e.g., 10).
+
+4. High-Level Goal of Operator Class Documentation
+The purpose of the operator class documentation is to:
+Guide the developer in implementing block placement, nesting, and interaction rules.
+Clarify which operators are standalone vs. container-dependent.
+Define runtime validation expectations, including type enforcement, logical errors, and clause ordering.
+Support the UI/UX design by providing structure for category tabs, visual cues, and intuitive drag-and-drop behavior.
+This document, combined with the detailed block specifications, ensures a consistent, predictable, and educational query-building experience for the user.
+
+
+
+Clause Blocks
+Includes: SELECT, FROM, WHERE, GROUP BY, ORDER BY, HAVING, LIMIT/TOP, DISTINCT
+Allowed children:
+SELECT → Column, Aggregation, Arithmetic, CASE/Conditional, Inline Functions, AS
+FROM → Table, JOIN
+WHERE/HAVING → Logical operators, Comparison operators, CASE/Conditional, Parentheses, Subquery
+GROUP BY / ORDER BY → Column, Aggregation, AS
+LIMIT / TOP → Numeric Literal
+DISTINCT → SELECT, COUNT
+Forbidden children: Clause blocks (except Subquery inside WHERE), JOIN (except inside FROM), Parentheses (outside logical grouping), AS (outside SELECT/ORDER BY)
+Notes: Only one instance per query; snap horizontally; free vertical placement; out-of-order placement allowed with runtime validation.
+
+Column / Table / Literal Blocks
+Allowed placement:
+Column → SELECT, GROUP BY, ORDER BY, Aggregation, Arithmetic, CASE/Conditional, Parentheses, AS
+Table → FROM, JOIN
+Literal → Aggregation, Arithmetic, CASE/Conditional, Parentheses, Comparison operators
+Forbidden placement: Standalone on canvas; inside Clause blocks where not allowed
+Notes: Literal type constraints enforced at runtime; highlights in red if invalid placement
+
+Logical / Comparison Operators
+Includes: AND, OR, NOT, =, <>, !=, >, <, >=, <=, BETWEEN, NOT BETWEEN, IN, NOT IN, LIKE, NOT LIKE, IS NULL, IS NOT NULL
+Allowed placement: WHERE, HAVING, ON, Parentheses
+Allowed children: Column, Literal, Aggregation, Arithmetic, CASE/Conditional, Parentheses, Subquery (for comparisons)
+Forbidden children: Clause blocks, Table, JOIN, AS, Inline Functions (unless nested inside Arithmetic)
+
+Aggregation & Arithmetic Operators
+Includes: COUNT(), COUNT(DISTINCT), SUM(), AVG(), MIN(), MAX(), VARIANCE(), STDDEV(), GROUP_CONCAT(), ARRAY_AGG(), +, -, *, /, %, POWER(), MOD(), FLOOR(), CEIL(), ROUND()
+Allowed placement: SELECT, ORDER BY, CASE, Parentheses, Arithmetic (nested), Aggregation (nested)
+Allowed children: Column, Literal, Arithmetic, Inline Functions, CASE/Conditional, Subquery
+Forbidden children: Clause blocks, Logical/Comparison operators directly, AS (unless wrapping Column)
+
+CASE & Conditional Blocks
+Includes: CASE, COALESCE(), NULLIF()
+Notes: WHEN, THEN, ELSE, END come as part of the CASE container and are not independently accessible
+Allowed placement: SELECT, WHERE, HAVING, ORDER BY, Aggregation, Parentheses
+Forbidden children: Clause blocks, Logical/Comparison operators (unless wrapped in Arithmetic), AS, JOIN, Parentheses outside grouping
+
+Join & Relationship Blocks
+Includes: JOIN (INNER, LEFT, RIGHT, FULL, CROSS)
+Notes: ON comes as part of the JOIN container
+Allowed placement: FROM, nested JOINs
+Allowed children: ON block only
+ON allowed children: Comparison operators, Logical operators, Parentheses, Subquery
+Forbidden children: Clause blocks (other than Table/FROM), Column, Aggregation, Arithmetic, CASE, AS
+
+Parentheses & Subqueries
+Parentheses: Container for Logical/Comparison operators, CASE blocks, Aggregation blocks, Arithmetic blocks
+Subquery: Container supporting full Clause set (SELECT, FROM, WHERE, GROUP BY, ORDER BY, HAVING)
+Forbidden children: Clause blocks directly in Parentheses, AS, Table (unless inside Subquery or JOIN)
+
+Aliases (AS)
+Allowed placement: SELECT, ORDER BY
+Allowed children: Column, Table
+Forbidden children: Clause blocks, Aggregation, Logical/Comparison, CASE, Arithmetic, Parentheses, JOIN
+Notes: Alias names auto-generated; cannot be modified
+
+Inline / Misc Functions
+Includes:
+String functions: CONCAT(), LENGTH(), SUBSTRING(), LEFT(), RIGHT(), TRIM(), LOWER(), UPPER(), REPLACE(), POSITION()
+Date/Time functions: CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, DATEADD(), DATEDIFF(), DATEPART(), EXTRACT(), NOW(), TIMESTAMPDIFF()
+Window functions: ROW_NUMBER(), RANK(), DENSE_RANK(), NTILE(), LAG(), LEAD()
+JSON functions: JSON_EXTRACT(), JSON_ARRAY(), JSON_OBJECT(), JSON_VALUE()
+Bitwise functions: BITAND(), BITOR(), BITXOR(), SHIFT_LEFT(), SHIFT_RIGHT()
+Allowed placement: SELECT, WHERE, HAVING, ORDER BY, CASE, Aggregation, Arithmetic, Parentheses
+Allowed children: Column, Literal, Aggregation, Arithmetic, Subquery
+Forbidden children: Clause blocks, AS, JOIN
+Notes: Functions can be nested; type constraints enforced at runtime
+
+
+
+Each lesson will contain the extensive list of operators to be made available to the user. Only the operators included in the lesson should be displayed. Any tabs that contain 0 available operators should be collapsed/hidden to the user to reduce clutter. Tabs should always be ordered alphabetically.
+Clauses
+SELECT, FROM, WHERE, GROUP BY, ORDER BY, HAVING, LIMIT/TOP, JOIN
+Logic
+AND, OR, NOT, CASE, COALESCE(), NULLIF()
+Comparison
+=, <>, !=, >, <, >=, <=, BETWEEN, NOT BETWEEN, IN, NOT IN, LIKE, NOT LIKE, IS NULL, IS NOT NULL
+Aggregates
+COUNT(), COUNT(DISTINCT), SUM(), AVG(), MIN(), MAX(), VARIANCE(), STDDEV(), GROUP_CONCAT(), ARRAY_AGG()
+Arithmetic
++, -, *, /, %, POWER(), MOD(), FLOOR(), CEIL(), ROUND()
+Functions
+String: CONCAT(), LENGTH(), SUBSTRING(), LEFT(), RIGHT(), TRIM(), LOWER(), UPPER(), REPLACE(), POSITION()
+Date/Time: CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, DATEADD(), DATEDIFF(), DATEPART(), EXTRACT(), NOW(), TIMESTAMPDIFF()
+Window: ROW_NUMBER(), RANK(), DENSE_RANK(), NTILE(), LAG(), LEAD()
+JSON: JSON_EXTRACT(), JSON_ARRAY(), JSON_OBJECT(), JSON_VALUE()
+Containers
+Parentheses ( ), Subqueries
+Literals
+Numeric literals, String literals, Date literals, Boolean literals (TRUE, FALSE)
+

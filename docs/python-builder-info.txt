@@ -1,0 +1,199 @@
+Python Builder – Overview and High-Level Goals
+This product is a block-based Python coding environment designed for users to learn, explore, and construct Python programs visually. It abstracts the syntax of Python into drag-and-drop operators, enabling users to focus on program logic, data manipulation, and control flow without needing to memorize punctuation, indentation, or detailed syntax rules. The platform is aimed at novice programmers, data engineers, or anyone building Python logic without a text-based IDE, while still producing fully valid Python code that can be executed.
+Guiding Implementation Principles
+1. The interface should abstract formatting away from the user as much as possible; placing tiles into the correct indentation level whenever possible
+2. The experience should feel natural and fluid; blocks and containers reacting predictably and smoothly
+3. The Python Builder will share general interaction behavior with the SQL builder interface; providing a standard look and feel, and meeting the user’s behavioral expectations based on the SQL builder
+4. Container boundaries should follow code-scope, and define chunks of code that are executed together
+5. The user should not be forced into building the code in any particular order; the interface should react intuitively to new tiles being placed on the code canvas, even if nonsensically from a code execution perspective
+6. The code execution experience will always take an iterable (i.e. dictionary or list) and visually demonstrate the code execution to the user in a way that addresses each element in the iterable, applies the transformations to the element, and demonstrates how values change to help reinforce connection between code execution (abstract) and output (tangible)
+
+This document covers 3 main areas of technical specificity:
+The distinct types of operator tiles; classified by their behavior when a user drags them onto the code canvas
+How each class of tile interacts with other classes of tile
+How the operators are organized into tabs for display to the user
+Explanation of the User Experience:
+Tabbed Operator Palette:
+Operators are grouped into intuitive categories (Math, Logic, Data, Strings, Itertools, Loops, Functions, I/O, etc.)
+Users can quickly find and drag the appropriate block onto the canvas.
+Drag-and-Drop Canvas:
+Users drag a block from the palette and drop it onto the canvas, which automatically enforces required child slots and block compatibility.
+Blocks can be nested inside parent blocks (e.g., loops, conditionals, functions) or attached as children (e.g., .append() to a list).
+Slots guide the user to fill inputs one at a time, preventing invalid placements or missing children.
+Progressive Construction:
+Users build programs one block at a time, visually seeing both the existing code (blue) and newly added block (white).
+This stepwise feedback reinforces cause-and-effect learning, showing how each block contributes to program behavior.
+Immediate Feedback and Execution:
+The generated Python code runs natively, providing instant results, output, or error messages.
+Users can see how changing or adding a block affects program flow and output.
+Focus on Logic and Learning:
+By removing syntax overhead, users concentrate on computational thinking, data manipulation, and problem-solving.
+The visual representation helps debugging and reasoning about loops, conditionals, and functions, making complex patterns intuitive.
+
+
+
+
+Following the Guiding Principles, here are the behaviors that I believe align with the most helpful user experience for students learning to code in Python:
+
+When a user places an operator with optional or required children, the operator contains empty/blank space that indicates to the user that another operator may be placed inside that operator (as described in provided Figmas)
+When a user drags a tile from the tile shelf to the code canvas and hovers the tile over the code canvas, the code canvas reacts by:
+Dragged tile over container tile: Container tile below hovering tile expands and visually indicates that the dragged tile may be dropped into the container. Dragged tile then appears in container tile. Line extends when placed horizontal between 2 tiles. Lower rows are displaced and moved down one row if hovered vertically between 2 tiles/containers.
+Dragged tile over non-container tile: Container expands to accept tile either on left or right of existing tile
+Dragged tile over no tile: Code canvas shows visual indication where the new tile would be dropped
+When a container that contains other tiles is dragged in the code canvas, the container tile and all other tiles move as a group, adhering to the tile behavior described in #2
+When a user drags a tile from the tiles shelf to another tile on the tiles shelf; no reaction from other tiles. Releasing the tile shows the tile sliding back to its original place in the tile shelf
+If a user drags a tile from inside a container to another space within that container, adjacent tiles should shift dynamically to show where the tile would be dropped.
+If a user drags a tile out of a container, the origin container should visually contract, and the tile should detach smoothly and hover.
+If a user drags a tile off of the code canvas and drops the tile, the tile should show as invalid and return to the tile shelf or disappear
+Undo/Redo should keep track of tile placements, and allow for the user to walk forward and backward through their actions.
+If the canvas exceeds maximum height, the canvas will show a scroll bar and extend vertically; maintaining the height of all tiles.
+If the user drags a tile to multiple overlapping containers that could validly accept the tile, the deepest container is prioritized.
+E.g. A user drags “print()” onto the code canvas between “for” and “if” lines. print() should land above the “if” container, as the “for” container is the deeper container.
+
+A mechanism should allow the user to manually indent or dedent any line. When a line is dedented and moves out of a container’s scope, that container should visually contract to reflect that it no longer contains the line. When a line is further indented, it should create a new container, and break the scope of the container that it previously was in
+
+
+
+1. Parent with Defined X Children
+Definition: Blocks that always require a fixed number of children in defined positions. All required children must be filled for the block to be valid.
+Operators / Constructs:
+if / elif / else: 3 children — [condition], [true body], [false body].
+for: 2 children — [iterator], [body].
+while: 2 children — [condition], [body].
+try / except / finally: 2–3 children — [try body], [except handler], [finally body] (optional).
+with: 2 children — [context expression], [body].
+def: 2 children — [parameters], [body].
+lambda: 2 children — [parameters], [expression].
+import … as: 2 children — [module], [alias].
+assert: 1–2 children — [condition] (required), [message] (optional).
+for key, value in dict.items(): 2 children — [target variables], [iterable].
+Children Allowed:
+Bodies → Standalone blocks, Parent with Optional Children, Parent with Unknown X Children.
+Conditions → Expression operators, Binary operators, or value-returning blocks.
+Implementation Notes:
+Render fixed slots for each required child.
+Nested bodies must accept multiple executable blocks.
+Enforce type constraints where relevant (e.g., Boolean for conditions).
+
+2. Parent with Unknown X Children (X ≥ 1)
+Definition: Blocks that accept a variable number of children, but must include at least one. Useful for functions or constructs with variable-length arguments.
+Operators / Constructs:
+min(), max(), sum(), all(), any()
+zip(), map(), filter(), enumerate()
+print()
+f"{}" (f-strings with variable interpolation)
+Children Allowed:
+Any value-producing block: Math, Data, Strings, Itertools, Literals.
+Implementation Notes:
+Allow dynamic addition/removal of child slots.
+Validate that at least one child is present.
+Bodies or arguments should be expressions returning a value.
+
+3. Parent with Optional Children
+Definition: Blocks that can exist empty or take optional children. Useful for containers, type conversions, or modifiers.
+Operators / Constructs:
+list(), dict(), set(), tuple()
+open()
+len()
+sorted(), range(), round(), enumerate()
+str(), int(), float()
+list.append(), list.extend(), list.pop()
+dict.get()
+Children Allowed:
+Optional children are value-returning blocks from Math, Data, Strings, Itertools, or Literals.
+Implementation Notes:
+Empty children slots are valid.
+Optional child blocks are used to provide content (e.g., list() with elements, open() with mode).
+Nested blocks should be compatible with the container or conversion operation.
+
+4. Only Child, Many Possible Parents
+Definition: Blocks that cannot exist independently; they must attach to a compatible parent.
+Operators / Constructs:
+String methods: .lower(), .upper(), .strip(), .replace(), .split(), .format()
+List methods: .append(), .extend(), .pop()
+Dict methods: .items(), .keys(), .values(), .get()
+.join() (method on a string parent)
+Valid Parents:
+str(), list(), dict(), set(), tuple(), or any parent block returning the corresponding type.
+Children Allowed:
+Some methods accept children (e.g., .join() requires an iterable of strings, .replace() requires old and new string).
+Implementation Notes:
+Render a single “parent attachment” socket to enforce correct parent type.
+Optionally allow internal child sockets if the method requires arguments.
+
+5. Standalone
+Definition: Blocks that can execute independently or be placed anywhere. They do not require children to function.
+Operators / Constructs:
+print(), pass, return, break, continue
+import, from … import
+True, False, None, numeric and string literals, empty containers ([], {}, ())
+Children Allowed:
+Typically none, though literals can be used as children inside other parents.
+Implementation Notes:
+Can exist as top-level blocks or nested inside loops, functions, or conditionals (as permitted by Python semantics).
+No child slots necessary unless overridden by context (e.g., return in a function).
+
+6. Binary Operators (Two Children Required)
+Definition: Operators that always require two operands, left and right.
+Operators:
+Arithmetic: +, -, *, /, //, %, ** (binary form only)
+Comparison: ==, !=, <, >, <=, >=
+Logical: and, or
+Membership/Identity: is, is not, in, not in
+Assignment: =, +=, -=, *=, /=
+Children Allowed:
+Left and right → any value-producing block: Math, Data, Strings, Itertools, Literals.
+Implementation Notes:
+Two sockets displayed at all times.
+Validate operand types where relevant.
+Unary usage of + and - is handled separately in Unary/Prefix.
+
+7. Unary/Prefix Operators (One Child Required)
+Definition: Operators that require a single operand, typically on the right.
+Operators:
+Unary arithmetic: -x, +x
+Logical: not x
+Statements requiring an expression: return x, raise x, assert x, del x
+Imports: import module, from package import name
+Children Allowed:
+Right-hand child → any value-returning block (Math, Data, Strings, Literals).
+Implementation Notes:
+One socket displayed at all times.
+Operators cannot exist without a child.
+Unary + and - handled here; binary forms use Category 6.
+
+
+Each lesson will contain the extensive list of operators to be made available to the user. Only the operators included in the lesson should be displayed. Any tabs that contain 0 available operators should be collapsed/hidden to the user to reduce clutter. Tabs should always be ordered alphabetically.
+Logic
+Purpose: Conditional control and program flow.
+Includes: if, elif, else, for, while, and, or, not, in, is, True, False, None, break, continue, pass
+
+Math
+Purpose: Arithmetic, comparison, and assignment operations.
+Includes: +, -, *, /, //, %, **, =, +=, -=, /=, ==, !=, <, >, <=, >=, abs(), round(), sum(), min(), max()
+
+Data
+Purpose: Working with lists, dictionaries, sets, and tuples.
+Includes: [], {}, list(), dict(), set(), tuple(), append(), extend(), pop(), get(), items(), keys(), values(), len(), del
+
+Strings
+Purpose: Text manipulation and formatting.
+Includes: ' ', f"{}", .format(), .split(), .strip(), .lower(), .upper(), .replace(), "".join()
+
+Functions
+Purpose: Defining and calling functions or expressions.
+Includes: def, return, lambda, map(), filter(), *args, **kwargs, assert, operator.itemgetter, operator.attrgetter
+
+Itertools
+Purpose: Iteration, transformation, and aggregation of sequences.
+Includes: range(), enumerate(), zip(), sorted(), reversed(), all(), any()
+
+Files
+Purpose: File and module input/output.
+Includes: open(), read(), write(), with, as, import, from, os.path.join(), json.load(), csv.reader()
+
+Errors
+Purpose: Exception handling and controlled program interruption.
+Includes: try, except, else, finally, raise, assert
+
+

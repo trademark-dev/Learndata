@@ -11,6 +11,7 @@ class AppImages {
   static String skilIntermediatBg = 'assets/images/skilIntermediatBg.png';
   static String takeQuiz = 'assets/images/takeQuiz.png';
   static String tabsContainer = 'assets/images/tabsContainer.png';
+  static String dropdots = 'assets/images/dropdots.png';
 
 }
 
@@ -61,5 +62,8 @@ class AppIcons {
   static String playNextIcon = 'assets/icons/playNextIcon.svg';
   static String compilledFaildIcon = 'assets/icons/compilledFaildIcon.svg';
   static String infoIcon = 'assets/icons/infoIcon.svg';
+  static String dropIcon = 'assets/icons/dropIcon.svg';
+  static String svgPatterns = 'assets/icons/svgPatterns.svg';
+  static String pythonIcon = 'assets/icons/pythonIcon.svg';
 
 }

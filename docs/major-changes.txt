@@ -1,0 +1,26 @@
+I made some additions to Milestone 2 (my additions are to scope clarity, but doesn't increase scope)
+
+Milestone 2: SQL and Python drag-and-drop UIs implemented (front-end only)
+
+Success Criteria:
+Repository access is shared and able to be pulled and built to prove functionality.
+All operators appear in a categorized, scrollable palette with clear icons and labels as detailed in requirements.
+Dragging and dropping operators is smooth and consistent (≤100ms lag).
+Operators snap precisely to valid grid locations, visually confirm attachment points, and maintain layout integrity.
+Connections between operators behave accurately (cannot overlap, float, or disconnect unintentionally).
+Containers, formatting, and alignment rules are consistent across SQL and Python builder screens.
+No flicker, jitter, or duplicate rendering issues.
+All drag-and-drop actions must include visual feedback (hover state, shadow, highlight) to communicate state to the user.
+All interactive behaviors must be tested on multiple devices (iOS + Android) to confirm cross-platform consistency.
+UI and transitions must be production-quality and demo-ready with all core user paths validated end-to-end.
+Code conforms to formatting standards (i.e. SQL best practices, pep8) as the user builds it by using an AST
+The current state of the code that the user has built is available at all times in the client-side
+An API is mocked in; hardcoded to return a single result dataset or Python compilation
+Python code visualization is able to be played via flexible components to handle API response
+All buttons are operable; undo, redo, reset, run (calls to mocked API)
+Out of Scope: 
+Server-side code execution, data persistence
+
+
+1. Not sure what the question is; not sure what "Create a canvas means" - I am definitely supportive of simplicity! 2. The empty box is a symbol to indicate to the user the position of a required argument (for example, the "MAX()" function requires an argument inside of MAX())
+3. I'm not sure what the question here is, but I hear that there are performance concerns. I don't have specific suggestions for optimization (I'd need a specific performance issue to look at to offer performance-tuning advice.) The drag-and-drop code editor is the core functionality of the app. There will be many tiles on the screen at once. 4. Good question - I think for SQL, automatic formatting is easy and makes sense. For Python, it doesn't make sure. The user should be able to indent/dedent lines

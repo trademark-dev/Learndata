@@ -29,14 +29,31 @@ class _SqlBuilderToolbarState extends State<SqlBuilderToolbar> {
   bool _isTableIconClicked = false;
   int _selectedTabIndex = 0;
   
+  Widget _buildDraggable({
+    required String data,
+    required Widget Function() builder,
+  }) {
+    final Widget chip = builder();
+    return LongPressDraggable<String>(
+      data: data,
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      feedback: _DragFeedbackChip(label: data),
+      childWhenDragging: Opacity(
+        opacity: 0.35,
+        child: chip,
+      ),
+      child: chip,
+    );
+  }
+
   final List<String> _tabs = [
     'Clauses',
-    'Logic',
-    'Aggregation',
-    'Column',
-    'Case',
-    'Data',
+    'Aggregations',
+    'Conditional',
     'Comparison',
+    'Logical',
+    'Columns',
+    'Literals',
   ];
 
   Widget _buildTabItem(String tabName, int index) {
@@ -125,7 +142,16 @@ class _SqlBuilderToolbarState extends State<SqlBuilderToolbar> {
   }
 
   Widget _buildClausesContent() {
-    final clausesItems = ['OPERATOR', 'FROM', 'GROUP BY', 'ORDER BY', 'WHERE'];
+    final clausesItems = [
+      'SELECT',
+      'FROM',
+      'JOIN',
+      'ON',
+      'WHERE',
+      'GROUP BY',
+      'ORDER BY',
+      'LIMIT',
+    ];
 
     return ListView.builder(
       shrinkWrap: true,
@@ -151,120 +177,125 @@ class _SqlBuilderToolbarState extends State<SqlBuilderToolbar> {
   }
 
   Widget _buildClauseItem(String label) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0x1A009CFF), // #009CFF1A
-        borderRadius: BorderRadius.circular(6.r),
-        border: Border.all(
-          width: 1,
-          color: const Color(0xFFE5E6EB).withOpacity(0.075),
+    Widget buildContent() {
+      return Container(
+        decoration: BoxDecoration(
+          color: const Color(0x1A009CFF), // #009CFF1A
+          borderRadius: BorderRadius.circular(6.r),
+          border: Border.all(
+            width: 1,
+            color: const Color(0xFFE5E6EB).withOpacity(0.075),
+          ),
         ),
-      ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(6.w, 4.h, 6.w, 4.h),
-            child: Row(
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontFamily: 'Geist Mono',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12.sp,
-                    height: 15 / 12,
-                    color: const Color(0xFF68C5FF), // #68C5FF
-                  ),
-                ),
-                SizedBox(width: 6.w),
-                Container(
-                  width: 17.w,
-                  height: 17.h,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF09253F), // #09253F
-                    borderRadius: BorderRadius.circular(4.r),
-                    border: Border.all(
-                      width: 1,
-                      color: const Color(0xFF184F7E), // #184F7E
+        child: Stack(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(6.w, 4.h, 6.w, 4.h),
+              child: Row(
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'Geist Mono',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.sp,
+                      height: 15 / 12,
+                      color: const Color(0xFF68C5FF), // #68C5FF
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xCC000000), // #000000CC
-                        offset: const Offset(0, 0),
-                        blurRadius: 4,
-                        spreadRadius: 0,
-                        blurStyle: BlurStyle.inner,
-                      ),
-                    ],
                   ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 1,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                              colors: [
-                                const Color(
-                                  0x66184F7E,
-                                ), // rgba(24, 79, 126, 0.4)
-                                const Color(0xFF184F7E), // #184F7E
-                              ],
+                  SizedBox(width: 6.w),
+                  Container(
+                    width: 17.w,
+                    height: 17.h,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF09253F), // #09253F
+                      borderRadius: BorderRadius.circular(4.r),
+                      border: Border.all(
+                        width: 1,
+                        color: const Color(0xFF184F7E), // #184F7E
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xCC000000), // #000000CC
+                          offset: const Offset(0, 0),
+                          blurRadius: 4,
+                          spreadRadius: 0,
+                          blurStyle: BlurStyle.inner,
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 1,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [
+                                  const Color(0x66184F7E),
+                                  const Color(0xFF184F7E),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withOpacity(0.5),
+                      Colors.transparent,
                     ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Colors.transparent,
-                    Colors.white.withOpacity(0.5),
-                    Colors.transparent,
-                  ],
+            Positioned(
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withOpacity(0.5),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            bottom: 0,
-            width: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.white.withOpacity(0.5),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      );
+    }
+
+    return _buildDraggable(
+      data: label,
+      builder: buildContent,
     );
   }
 
@@ -317,79 +348,87 @@ class _SqlBuilderToolbarState extends State<SqlBuilderToolbar> {
 
   Widget _buildComparisonItem(String operator) {
     final isSymbol = _isSymbol(operator);
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0x1A009CFF), // #009CFF1A
-        borderRadius: BorderRadius.circular(6.r),
-        border: Border.all(
-          width: 1,
-          color: const Color(0xFFE5E6EB).withOpacity(0.075),
+    Widget buildContent() {
+      return Container(
+        decoration: BoxDecoration(
+          color: const Color(0x1A009CFF), // #009CFF1A
+          borderRadius: BorderRadius.circular(6.r),
+          border: Border.all(
+            width: 1,
+            color: const Color(0xFFE5E6EB).withOpacity(0.075),
+          ),
         ),
-      ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(6.w, 4.h, 6.w, 4.h),
-            child: Row(
-              children: [
-                _buildInputBox(),
-                SizedBox(width: 4.w),
-                Text(
-                  operator,
-                  style: TextStyle(
-                    fontFamily: 'Roboto Mono',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12.sp,
-                    height: 15 / 12,
-                    color: isSymbol ? AppColors.white : const Color(0xFF68C5FF),
+        child: Stack(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(6.w, 4.h, 6.w, 4.h),
+              child: Row(
+                children: [
+                  _buildInputBox(),
+                  SizedBox(width: 4.w),
+                  Text(
+                    operator,
+                    style: TextStyle(
+                      fontFamily: 'Roboto Mono',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.sp,
+                      height: 15 / 12,
+                      color:
+                          isSymbol ? AppColors.white : const Color(0xFF68C5FF),
+                    ),
+                  ),
+                  SizedBox(width: 4.w),
+                  if (operator != 'IS NULL' && operator != 'IS NOT NULL')
+                    _buildInputBox(),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withOpacity(0.5),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
-                SizedBox(width: 4.w),
-                if (operator != 'IS NULL' && operator != 'IS NOT NULL')
-                  _buildInputBox(),
-              ],
+              ),
             ),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Colors.transparent,
-                    Colors.white.withOpacity(0.5),
-                    Colors.transparent,
-                  ],
+            Positioned(
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withOpacity(0.5),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            bottom: 0,
-            width: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.white.withOpacity(0.5),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      );
+    }
+
+    return _buildDraggable(
+      data: operator,
+      builder: buildContent,
     );
   }
 
@@ -439,39 +478,82 @@ class _SqlBuilderToolbarState extends State<SqlBuilderToolbar> {
     );
   }
 
+  Widget _buildLabelChip(String label) {
+    Widget buildContent() {
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: const Color(0x1A009CFF),
+          borderRadius: BorderRadius.circular(6.r),
+          border: Border.all(
+            width: 1,
+            color: const Color(0xFFE5E6EB).withOpacity(0.075),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Geist Mono',
+            fontWeight: FontWeight.w600,
+            fontSize: 12.sp,
+            height: 1.2,
+            color: Colors.white,
+          ),
+        ),
+      );
+    }
+
+    return _buildDraggable(
+      data: label,
+      builder: buildContent,
+    );
+  }
+
   Widget _buildLogicContent() {
-    final logicItems = ['AND', 'OR', 'NOT', 'XOR'];
-    return _buildGridContent(logicItems);
+    final logicItems = ['AND', 'OR', 'NOT'];
+    return _buildGridContent(logicItems, chipBuilder: _buildLabelChip);
   }
 
   Widget _buildAggregationContent() {
-    final aggItems = ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX'];
-    return _buildGridContent(aggItems);
+    final aggItems = ['COUNT()', 'SUM()'];
+    return _buildGridContent(aggItems, chipBuilder: _buildLabelChip);
   }
 
-  Widget _buildColumnContent() {
-    final columnItems = ['*', 'DISTINCT', 'TOP', 'LIMIT'];
-    return _buildGridContent(columnItems);
+  Widget _buildColumnsContent() {
+    final columnItems = [
+      'orders.id',
+      'orders.customer_id',
+      'orders.order_date',
+      'orders.amount',
+      'orders.status',
+      'customers.last_name',
+      'customers.id',
+      'customers.first_name',
+      'customers.email',
+    ];
+    return _buildGridContent(columnItems, chipBuilder: _buildLabelChip);
   }
 
   Widget _buildCaseContent() {
     final caseItems = ['CASE', 'WHEN', 'THEN', 'ELSE', 'END'];
-    return _buildGridContent(caseItems);
+    return _buildGridContent(caseItems, chipBuilder: _buildLabelChip);
   }
 
-  Widget _buildDataContent() {
-    final dataItems = [
-      'INT',
-      'VARCHAR',
-      'DATE',
-      'TIMESTAMP',
-      'BOOLEAN',
-      'DECIMAL',
+  Widget _buildLiteralsContent() {
+    final literalItems = [
+      '10',
+      '1000',
+      '\'VIP\'',
+      '\'Regular\'',
+      '\'2025-01-01\'',
     ];
-    return _buildGridContent(dataItems);
+    return _buildGridContent(literalItems, chipBuilder: _buildLabelChip);
   }
 
-  Widget _buildGridContent(List<String> items) {
+  Widget _buildGridContent(
+    List<String> items, {
+    Widget Function(String label)? chipBuilder,
+  }) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -482,10 +564,10 @@ class _SqlBuilderToolbarState extends State<SqlBuilderToolbar> {
           padding: EdgeInsets.only(bottom: 6.h),
           child: Row(
             children: [
-              _buildClauseItem(items[rowIndex * 2]),
+              (chipBuilder ?? _buildClauseItem)(items[rowIndex * 2]),
               SizedBox(width: 6.w),
               if (rowIndex * 2 + 1 < items.length)
-                _buildClauseItem(items[rowIndex * 2 + 1]),
+                (chipBuilder ?? _buildClauseItem)(items[rowIndex * 2 + 1]),
             ],
           ),
         );
@@ -499,21 +581,20 @@ class _SqlBuilderToolbarState extends State<SqlBuilderToolbar> {
         decoration: BoxDecoration(
           // color: const Color(0x05009CFF), // #009CFF05
         ),
-        child:
-            _selectedTabIndex == 0
+        child: _selectedTabIndex == 0
                 ? _buildClausesContent()
                 : _selectedTabIndex == 1
-                ? _buildLogicContent()
-                : _selectedTabIndex == 2
                 ? _buildAggregationContent()
+                : _selectedTabIndex == 2
+                    ? _buildCaseContent()
                 : _selectedTabIndex == 3
-                ? _buildColumnContent()
+                        ? _buildComparisonContent()
                 : _selectedTabIndex == 4
-                ? _buildCaseContent()
+                            ? _buildLogicContent()
                 : _selectedTabIndex == 5
-                ? _buildDataContent()
+                                ? _buildColumnsContent()
                 : _selectedTabIndex == 6
-                ? _buildComparisonContent()
+                                    ? _buildLiteralsContent()
                 : const SizedBox(),
       ),
     );
@@ -636,37 +717,49 @@ class _SqlBuilderToolbarState extends State<SqlBuilderToolbar> {
   }
 
   Widget _buildHeaderContent() {
+    final bool undoEnabled = widget.onUndo != null;
+    final bool redoEnabled = widget.onRedo != null;
+
     return Row(
             children: [
-              // Left section - Undo and Redo icons
               GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  widget.onUndo?.call();
-                },
-                child: SvgPicture.asset(
-                  AppIcons.undowicon,
-                  width: 20.w,
-                  height: 20.h,
-                  colorFilter: const ColorFilter.mode(
-                    AppColors.white,
-                    BlendMode.srcIn,
+                onTap: undoEnabled
+                    ? () {
+                        HapticFeedback.lightImpact();
+                        widget.onUndo?.call();
+                      }
+                    : null,
+                child: Opacity(
+                  opacity: undoEnabled ? 1.0 : 0.35,
+                  child: SvgPicture.asset(
+                    AppIcons.undowicon,
+                    width: 20.w,
+                    height: 20.h,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.white,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
               ),
               SizedBox(width: 8.w),
               GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  widget.onRedo?.call();
-                },
-                child: SvgPicture.asset(
-                  AppIcons.redoIcon,
-                  width: 20.w,
-                  height: 20.h,
-                  colorFilter: const ColorFilter.mode(
-                    AppColors.white,
-                    BlendMode.srcIn,
+                onTap: redoEnabled
+                    ? () {
+                        HapticFeedback.lightImpact();
+                        widget.onRedo?.call();
+                      }
+                    : null,
+                child: Opacity(
+                  opacity: redoEnabled ? 1.0 : 0.35,
+                  child: SvgPicture.asset(
+                    AppIcons.redoIcon,
+                    width: 20.w,
+                    height: 20.h,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.white,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
               ),
@@ -814,6 +907,54 @@ class _SqlBuilderToolbarState extends State<SqlBuilderToolbar> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DragFeedbackChip extends StatelessWidget {
+  final String label;
+
+  const _DragFeedbackChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12.r),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF3F67FF),
+              Color(0xFF9C4DFF),
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF10244C).withOpacity(0.55),
+              blurRadius: 16,
+              offset: const Offset(0, 10),
+            ),
+          ],
+          border: Border.all(
+            color: Colors.white.withOpacity(0.35),
+            width: 1.2,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontWeight: FontWeight.w600,
+            fontSize: 14.sp,
+            letterSpacing: 0.5,
+            color: Colors.white,
+          ),
+        ),
+      ),
     );
   }
 }
