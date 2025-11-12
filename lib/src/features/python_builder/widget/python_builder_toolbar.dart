@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/app_images.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/app_colors.dart';
-import 'package:d99_learn_data_enginnering/src/common/theme/fonts.dart';
 import 'package:d99_learn_data_enginnering/src/services/ripple_service.dart';
 
 class PythonBuilderToolbar extends StatefulWidget {
@@ -209,30 +208,68 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
   }
 
   Widget _buildClauseItem(String label) {
+    Widget buildContent() {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(50.r),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0x99232834), // #23283499
+              borderRadius: BorderRadius.circular(50.r),
+              border: Border.all(
+                width: 1,
+                color: const Color(0xFFE5E6EB).withOpacity(0.101), // #E5E6EB1A
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(6.w),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'Geist Mono',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.sp,
+                      height: 15 / 12,
+                      color: const Color(0xFFB9B9B9), // #B9B9B9
+                    ),
+                  ),
+                  SizedBox(width: 6.w),
+                  Container(
+                    width: 18.w,
+                    height: 18.h,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF141F2A), // #141F2A
+                      borderRadius: BorderRadius.circular(50.r),
+                      border: Border.all(
+                        width: 1,
+                        color: const Color(0xFF586067), // #586067
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xCC000000), // #000000CC
+                          offset: const Offset(0, 0),
+                          blurRadius: 4,
+                          spreadRadius: 0,
+                          blurStyle: BlurStyle.inner,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return _buildDraggable(
       data: label,
-      builder: () {
-        return Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(
-              width: 1,
-              color: Colors.white.withOpacity(0.12),
-            ),
-            color: const Color(0x33232834),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.geistMono,
-              fontWeight: FontWeight.w600,
-              fontSize: 12.sp,
-              color: Colors.white,
-            ),
-          ),
-        );
-      },
+      builder: buildContent,
     );
   }
 
@@ -632,20 +669,27 @@ class _PythonDragFeedbackChip extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10.r),
-          color: const Color(0xF0142230),
+          borderRadius: BorderRadius.circular(12.r),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF4BEDC2),
+              Color(0xFF67A6FF),
+            ],
+          ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0F2C46).withOpacity(0.4),
+              color: const Color(0xFF0B253C).withOpacity(0.55),
               blurRadius: 16,
               offset: const Offset(0, 10),
             ),
           ],
           border: Border.all(
-            color: Colors.white.withOpacity(0.25),
-            width: 1,
+            color: Colors.white.withOpacity(0.35),
+            width: 1.2,
           ),
         ),
         child: Text(
@@ -653,7 +697,8 @@ class _PythonDragFeedbackChip extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Roboto',
             fontWeight: FontWeight.w600,
-            fontSize: 13.sp,
+            fontSize: 14.sp,
+            letterSpacing: 0.5,
             color: Colors.white,
           ),
         ),
