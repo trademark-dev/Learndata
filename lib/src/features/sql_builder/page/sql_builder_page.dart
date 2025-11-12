@@ -24,9 +24,9 @@ class _SqlBuilderPageState extends State<SqlBuilderPage>
   bool _showPopup = false;
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
-  final List<String> _canvasBlocks = [];
-  final List<List<String>> _undoStack = [];
-  final List<List<String>> _redoStack = [];
+  final List<List<String>> _canvasRows = [];
+  final List<List<List<String>>> _undoStack = [];
+  final List<List<List<String>>> _redoStack = [];
 
   @override
   void initState() {
@@ -58,35 +58,58 @@ class _SqlBuilderPageState extends State<SqlBuilderPage>
     _slideController.forward();
   }
 
+  List<List<String>> _cloneCanvasRows() {
+    return _canvasRows
+        .map((row) => List<String>.from(row))
+        .toList(growable: true);
+  }
+
   void _recordForUndo() {
-    _undoStack.add(List<String>.from(_canvasBlocks));
+    _undoStack.add(_cloneCanvasRows());
     if (_undoStack.length > 50) {
       _undoStack.removeAt(0);
     }
   }
 
-  void _handleBlockDropped(String block) {
+  void _handleBlockDropped(String block, CanvasDropDetails details) {
     setState(() {
       _recordForUndo();
-      _canvasBlocks.add(block);
+      final int boundedIndex = details.rowIndex < 0
+          ? 0
+          : details.rowIndex > _canvasRows.length
+              ? _canvasRows.length
+              : details.rowIndex;
+
+      if (details.insertAsNewRow || _canvasRows.isEmpty) {
+        _canvasRows.insert(boundedIndex, [block]);
+      } else if (boundedIndex >= _canvasRows.length) {
+        _canvasRows.add([block]);
+      } else {
+        _canvasRows[boundedIndex].add(block);
+      }
       _redoStack.clear();
     });
   }
 
-  void _removeCanvasBlock(int index) {
-    if (index < 0 || index >= _canvasBlocks.length) return;
+  void _removeCanvasBlock(int rowIndex, int blockIndex) {
+    if (rowIndex < 0 || rowIndex >= _canvasRows.length) return;
+    final row = _canvasRows[rowIndex];
+    if (blockIndex < 0 || blockIndex >= row.length) return;
     setState(() {
       _recordForUndo();
-      _canvasBlocks.removeAt(index);
+      row.removeAt(blockIndex);
+      if (row.isEmpty) {
+        _canvasRows.removeAt(rowIndex);
+      }
       _redoStack.clear();
     });
   }
 
   void _clearCanvas() {
-    if (_canvasBlocks.isEmpty) return;
+    if (_canvasRows.isEmpty) return;
     setState(() {
       _recordForUndo();
-      _canvasBlocks.clear();
+      _canvasRows.clear();
       _redoStack.clear();
     });
   }
@@ -94,22 +117,22 @@ class _SqlBuilderPageState extends State<SqlBuilderPage>
   void _undo() {
     if (_undoStack.isEmpty) return;
     setState(() {
-      _redoStack.add(List<String>.from(_canvasBlocks));
+      _redoStack.add(_cloneCanvasRows());
       final previous = _undoStack.removeLast();
-      _canvasBlocks
+      _canvasRows
         ..clear()
-        ..addAll(previous);
+        ..addAll(previous.map((row) => List<String>.from(row)));
     });
   }
 
   void _redo() {
     if (_redoStack.isEmpty) return;
     setState(() {
-      _undoStack.add(List<String>.from(_canvasBlocks));
+      _undoStack.add(_cloneCanvasRows());
       final next = _redoStack.removeLast();
-      _canvasBlocks
+      _canvasRows
         ..clear()
-        ..addAll(next);
+        ..addAll(next.map((row) => List<String>.from(row)));
     });
   }
 
@@ -249,10 +272,10 @@ class _SqlBuilderPageState extends State<SqlBuilderPage>
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 10.w),
                       child: SqlBuilderCanvas(
-                        blocks: _canvasBlocks,
+                        rows: _canvasRows,
                         onBlockDropped: _handleBlockDropped,
                         onRemoveBlock: _removeCanvasBlock,
-                        onClear: _canvasBlocks.isNotEmpty ? _clearCanvas : null,
+                        onClear: _canvasRows.isNotEmpty ? _clearCanvas : null,
                       ),
                     ),
                     SizedBox(height: 18.h),

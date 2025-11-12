@@ -1,149 +1,331 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:d99_learn_data_enginnering/src/common/theme/app_colors.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/fonts.dart';
 import 'package:d99_learn_data_enginnering/src/common/widgets/glass_box.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/app_images.dart';
 
+class CanvasDropDetails {
+  final int rowIndex;
+  final bool insertAsNewRow;
+
+  const CanvasDropDetails({
+    required this.rowIndex,
+    this.insertAsNewRow = false,
+  });
+}
+
 class SqlBuilderCanvas extends StatelessWidget {
-  final List<String> blocks;
-  final ValueChanged<String> onBlockDropped;
-  final ValueChanged<int>? onRemoveBlock;
+  final List<List<String>> rows;
+  final void Function(String block, CanvasDropDetails details) onBlockDropped;
+  final void Function(int rowIndex, int blockIndex)? onRemoveBlock;
   final VoidCallback? onClear;
 
   const SqlBuilderCanvas({
     super.key,
-    required this.blocks,
+    required this.rows,
     required this.onBlockDropped,
     this.onRemoveBlock,
     this.onClear,
   });
 
+  bool get _hasRows => rows.isNotEmpty;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return DragTarget<String>(
-          onWillAccept: (_) => true,
-          onAccept: onBlockDropped,
-          builder: (context, candidateData, rejectedData) {
-            final isActive = candidateData.isNotEmpty;
-            return GlassBox(
-              radius: 16,
-              width: constraints.maxWidth,
-              padding: EdgeInsets.zero,
-              child: Stack(
-            children: [
-              AnimatedContainer(
-                padding: EdgeInsets.all(16.w),
-                duration: const Duration(milliseconds: 200),
-                constraints: BoxConstraints(minHeight: 160.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (blocks.isNotEmpty && onClear != null)
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: GestureDetector(
-                          onTap: onClear,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8.w,
-                              vertical: 4.h,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20.r),
-                              color: Colors.white.withOpacity(0.08),
-                            ),
-                            child: Text(
-                              'Clear',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 11.sp,
-                                color: Colors.white,
-                              ),
-                            ),
+        return GlassBox(
+          radius: 16,
+          width: constraints.maxWidth,
+          padding: EdgeInsets.zero,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.all(16.w),
+            constraints: BoxConstraints(minHeight: 160.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_hasRows && onClear != null)
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: GestureDetector(
+                      onTap: onClear,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20.r),
+                          color: Colors.white.withOpacity(0.08),
+                        ),
+                        child: Text(
+                          'Clear',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 11.sp,
+                            color: Colors.white,
                           ),
                         ),
                       ),
-                    if (blocks.isNotEmpty && onClear != null)
-                      SizedBox(height: 14.h),
-                    if (blocks.isEmpty && candidateData.isEmpty)
-                      Padding(
-                        padding: EdgeInsets.symmetric(vertical: 20.h),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset(
-                              AppIcons.dropIcon,
-                              width: 48.w,
-                              height: 48.w,
-                              colorFilter: const ColorFilter.mode(
-                                Colors.white,
-                                BlendMode.srcIn,
-                              ),
-                            ),
-                            SizedBox(height: 14.h),
-                            Text(
-                              'Drag blocks here',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13.sp,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(height: 6.h),
-                            Text(
-                              'Drop from the palette to start building your query.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontFamily: 'Rubik',
-                                fontSize: 12.sp,
-                                height: 1.4,
-                                color: Colors.white.withOpacity(0.75),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      Wrap(
-                        spacing: 8.w,
-                        runSpacing: 8.h,
-                        children: [
-                          ...blocks
-                              .asMap()
-                              .entries
-                              .map(
-                                (entry) => _CanvasChip(
-                                  label: entry.value,
-                                  onRemove: onRemoveBlock != null
-                                      ? () => onRemoveBlock!(entry.key)
-                                      : null,
-                                ),
-                              )
-                              .toList(),
-                          ...candidateData
-                              .whereType<String>()
-                              .map(
-                                (value) => _CanvasChip(
-                                  label: value,
-                                  isPreview: true,
-                                ),
-                              ),
-                        ],
+                    ),
+                  ),
+                if (_hasRows && onClear != null) SizedBox(height: 12.h),
+                if (!_hasRows)
+                  _EmptyCanvasDropTarget(
+                    onAccept: (value) => onBlockDropped(
+                      value,
+                      const CanvasDropDetails(
+                        rowIndex: 0,
+                        insertAsNewRow: true,
                       ),
-                  ],
+                    ),
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ...List.generate(
+                        rows.length,
+                        (index) => Padding(
+                          padding: EdgeInsets.only(
+                            bottom: index == rows.length - 1 ? 12.h : 10.h,
+                          ),
+                          child: _RowDropTarget(
+                            rowIndex: index,
+                            blocks: rows[index],
+                            onDrop: (block) => onBlockDropped(
+                              block,
+                              CanvasDropDetails(rowIndex: index),
+                            ),
+                            onRemove: onRemoveBlock != null
+                                ? (blockIndex) =>
+                                    onRemoveBlock!(index, blockIndex)
+                                : null,
+                          ),
+                        ),
+                      ),
+                      _AddLineDropTarget(
+                        onDrop: (block) => onBlockDropped(
+                          block,
+                          CanvasDropDetails(
+                            rowIndex: rows.length,
+                            insertAsNewRow: true,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RowDropTarget extends StatelessWidget {
+  final int rowIndex;
+  final List<String> blocks;
+  final ValueChanged<String> onDrop;
+  final ValueChanged<int>? onRemove;
+
+  const _RowDropTarget({
+    required this.rowIndex,
+    required this.blocks,
+    required this.onDrop,
+    this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DragTarget<String>(
+      onWillAccept: (_) => true,
+      onAccept: onDrop,
+      builder: (context, candidateData, rejectedData) {
+        final bool isActive = candidateData.isNotEmpty;
+        final List<String> previews =
+            candidateData.whereType<String>().toList();
+        final List<Widget> chipWidgets = [
+          ...blocks.asMap().entries.map(
+                (entry) => _CanvasChip(
+                  label: entry.value,
+                  onRemove: onRemove != null
+                      ? () => onRemove!(entry.key)
+                      : null,
                 ),
               ),
-            ],
+          ...previews.map(
+            (value) => _CanvasChip(
+              label: value,
+              isPreview: true,
+            ),
+          ),
+        ];
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 0.w, vertical: 0.h),
+          constraints: BoxConstraints(minHeight: 8.h),
+          // decoration: BoxDecoration(
+          //   borderRadius: BorderRadius.circular(10.r),
+          //   color: isActive
+          //       ? Colors.white.withOpacity(0.06)
+          //       : Colors.white.withOpacity(0.02),
+          //   border: Border.all(
+          //     color: isActive
+          //         ? Colors.white.withOpacity(0.35)
+          //         : Colors.white.withOpacity(0.08),
+          //     width: 1,
+          //   ),
+          // ),
+          child: chipWidgets.isEmpty
+              ? const SizedBox.shrink()
+              : Wrap(
+                  alignment: WrapAlignment.start,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12.w,
+                  runSpacing: 10.h,
+                  children: chipWidgets,
+                ),
+        );
+      },
+    );
+  }
+}
+
+class _AddLineDropTarget extends StatelessWidget {
+  final ValueChanged<String> onDrop;
+
+  const _AddLineDropTarget({required this.onDrop});
+
+  @override
+  Widget build(BuildContext context) {
+    return DragTarget<String>(
+      onWillAccept: (_) => true,
+      onAccept: onDrop,
+      builder: (context, candidateData, rejectedData) {
+        final bool isActive = candidateData.isNotEmpty;
+        final List<String> previews =
+            candidateData.whereType<String>().toList();
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(
+              color: isActive
+                  ? Colors.white.withOpacity(0.5)
+                  : Colors.white.withOpacity(0.12),
+              width: 1,
+            ),
+            color: isActive
+                ? Colors.white.withOpacity(0.06)
+                : Colors.white.withOpacity(0.015),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.keyboard_return,
+                size: 16.sp,
+                color: Colors.white.withOpacity(0.7),
               ),
-            );
-          },
+              SizedBox(width: 8.w),
+              Flexible(
+                fit: FlexFit.loose,
+                child: Text(
+                  'Drop here to start a new line',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Rubik',
+                    fontSize: 12.sp,
+                    color: Colors.white.withOpacity(0.75),
+                  ),
+                ),
+              ),
+              if (previews.isNotEmpty) ...[
+                SizedBox(width: 8.w),
+                _CanvasChip(
+                  label: previews.first,
+                  isPreview: true,
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _EmptyCanvasDropTarget extends StatelessWidget {
+  final ValueChanged<String> onAccept;
+
+  const _EmptyCanvasDropTarget({required this.onAccept});
+
+  @override
+  Widget build(BuildContext context) {
+    return DragTarget<String>(
+      onWillAccept: (_) => true,
+      onAccept: onAccept,
+      builder: (context, candidateData, rejectedData) {
+        final bool isActive = candidateData.isNotEmpty;
+        final List<String> previews =
+            candidateData.whereType<String>().toList();
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: EdgeInsets.symmetric(vertical: 20.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SvgPicture.asset(
+                AppIcons.dropIcon,
+                width: 48.w,
+                height: 48.w,
+                colorFilter: const ColorFilter.mode(
+                  Colors.white,
+                  BlendMode.srcIn,
+                ),
+              ),
+              SizedBox(height: 14.h),
+              Text(
+                isActive ? 'Release to drop' : 'Drag blocks here',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13.sp,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                'Drop from the palette to start building your query.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Rubik',
+                  fontSize: 12.sp,
+                  height: 1.4,
+                  color: Colors.white.withOpacity(0.75),
+                ),
+              ),
+              if (previews.isNotEmpty) ...[
+                SizedBox(height: 12.h),
+                _CanvasChip(
+                  label: previews.first,
+                  isPreview: true,
+                ),
+              ],
+            ],
+          ),
         );
       },
     );
@@ -163,71 +345,50 @@ class _CanvasChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chipContent = Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8.r),
-        gradient: LinearGradient(
-          colors: isPreview
-              ? [
-                  const Color(0xFF68C5FF).withOpacity(0.35),
-                  const Color(0xFFEA74FF).withOpacity(0.35),
-                ]
-              : [
-                  const Color(0xFF093B5A),
-                  const Color(0x80093B5A),
-                ],
-        ),
-        border: Border.all(
-          color: Colors.white.withOpacity(isPreview ? 0.6 : 0.2),
-          width: 1,
-        ),
-      ),
+    final TextStyle textStyle = TextStyle(
+      fontFamily: AppFonts.geistMono,
+      fontSize: 13.sp,
+      fontWeight: FontWeight.w600,
+      height: 1.2,
+      color: isPreview ? Colors.white.withOpacity(0.6) : Colors.white,
+    );
+
+    final Widget text = Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
       child: Text(
         label,
-        style: TextStyle(
-          fontFamily: AppFonts.geistMono,
-          fontSize: 12.sp,
-          fontWeight: FontWeight.w600,
-          height: 1.2,
-          color: Colors.white,
-        ),
+        style: textStyle,
       ),
     );
 
-    if (onRemove == null || isPreview) {
-      return chipContent;
+    if (isPreview || onRemove == null) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 4.h),
+        child: text,
+      );
     }
 
-    return GestureDetector(
-      onTap: onRemove,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          chipContent,
-          Positioned(
-            top: -6.h,
-            right: -6.w,
-            child: Container(
-              width: 16.w,
-              height: 16.h,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.12),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.4),
-                  width: 1,
-                ),
-              ),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        text,
+        Positioned(
+          top: -8.h,
+          right: -8.w,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: onRemove,
+            child: Padding(
+              padding: EdgeInsets.all(4.w),
               child: Icon(
                 Icons.close,
-                size: 10.sp,
-                color: Colors.white,
+                size: 14.sp,
+                color: const Color.fromARGB(255, 255, 71, 71),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

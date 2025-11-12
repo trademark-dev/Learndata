@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/app_images.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/app_colors.dart';
+import 'package:d99_learn_data_enginnering/src/common/theme/fonts.dart';
 import 'package:d99_learn_data_enginnering/src/services/ripple_service.dart';
 
 class SqlBuilderToolbar extends StatefulWidget {
@@ -177,125 +178,30 @@ class _SqlBuilderToolbarState extends State<SqlBuilderToolbar> {
   }
 
   Widget _buildClauseItem(String label) {
-    Widget buildContent() {
-      return Container(
-        decoration: BoxDecoration(
-          color: const Color(0x1A009CFF), // #009CFF1A
-          borderRadius: BorderRadius.circular(6.r),
-          border: Border.all(
-            width: 1,
-            color: const Color(0xFFE5E6EB).withOpacity(0.075),
-          ),
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(6.w, 4.h, 6.w, 4.h),
-              child: Row(
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: 'Geist Mono',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.sp,
-                      height: 15 / 12,
-                      color: const Color(0xFF68C5FF), // #68C5FF
-                    ),
-                  ),
-                  SizedBox(width: 6.w),
-                  Container(
-                    width: 17.w,
-                    height: 17.h,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF09253F), // #09253F
-                      borderRadius: BorderRadius.circular(4.r),
-                      border: Border.all(
-                        width: 1,
-                        color: const Color(0xFF184F7E), // #184F7E
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xCC000000), // #000000CC
-                          offset: const Offset(0, 0),
-                          blurRadius: 4,
-                          spreadRadius: 0,
-                          blurStyle: BlurStyle.inner,
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          height: 1,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                                colors: [
-                                  const Color(0x66184F7E),
-                                  const Color(0xFF184F7E),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      Colors.transparent,
-                      Colors.white.withOpacity(0.5),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              left: 0,
-              bottom: 0,
-              width: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.white.withOpacity(0.5),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
     return _buildDraggable(
       data: label,
-      builder: buildContent,
+      builder: () {
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(
+              width: 1,
+              color: Colors.white.withOpacity(0.12),
+            ),
+            color: const Color(0x14093B5A),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.geistMono,
+              fontWeight: FontWeight.w600,
+              fontSize: 12.sp,
+              color: AppColors.white,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -348,164 +254,84 @@ class _SqlBuilderToolbarState extends State<SqlBuilderToolbar> {
 
   Widget _buildComparisonItem(String operator) {
     final isSymbol = _isSymbol(operator);
-    Widget buildContent() {
-      return Container(
-        decoration: BoxDecoration(
-          color: const Color(0x1A009CFF), // #009CFF1A
-          borderRadius: BorderRadius.circular(6.r),
-          border: Border.all(
-            width: 1,
-            color: const Color(0xFFE5E6EB).withOpacity(0.075),
-          ),
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(6.w, 4.h, 6.w, 4.h),
-              child: Row(
-                children: [
-                  _buildInputBox(),
-                  SizedBox(width: 4.w),
-                  Text(
-                    operator,
-                    style: TextStyle(
-                      fontFamily: 'Roboto Mono',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.sp,
-                      height: 15 / 12,
-                      color:
-                          isSymbol ? AppColors.white : const Color(0xFF68C5FF),
-                    ),
-                  ),
-                  SizedBox(width: 4.w),
-                  if (operator != 'IS NULL' && operator != 'IS NOT NULL')
-                    _buildInputBox(),
-                ],
-              ),
-            ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      Colors.transparent,
-                      Colors.white.withOpacity(0.5),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              left: 0,
-              bottom: 0,
-              width: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.white.withOpacity(0.5),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
     return _buildDraggable(
       data: operator,
-      builder: buildContent,
+      builder: () {
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(
+              width: 1,
+              color: Colors.white.withOpacity(0.12),
+            ),
+            color: const Color(0x14093B5A),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildInputBox(),
+              SizedBox(width: 6.w),
+              Text(
+                operator,
+                style: TextStyle(
+                  fontFamily: 'Roboto Mono',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12.sp,
+                  color:
+                      isSymbol ? AppColors.white : const Color(0xFF68C5FF),
+                ),
+              ),
+              SizedBox(width: 6.w),
+              if (operator != 'IS NULL' && operator != 'IS NOT NULL')
+                _buildInputBox(),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildInputBox() {
     return Container(
-      width: 17.w,
-      height: 17.h,
+      width: 18.w,
+      height: 18.h,
       decoration: BoxDecoration(
-        color: const Color(0xFF09253F), // #09253F
+        color: const Color(0x3309233A),
         borderRadius: BorderRadius.circular(4.r),
         border: Border.all(
           width: 1,
-          color: const Color(0xFF184F7E), // #184F7E
+          color: Colors.white.withOpacity(0.18),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xCC000000), // #000000CC
-            offset: const Offset(0, 0),
-            blurRadius: 4,
-            spreadRadius: 0,
-            blurStyle: BlurStyle.inner,
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    const Color(0x66184F7E), // rgba(24, 79, 126, 0.4)
-                    const Color(0xFF184F7E), // #184F7E
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
 
   Widget _buildLabelChip(String label) {
-    Widget buildContent() {
-      return Container(
-        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-        decoration: BoxDecoration(
-          color: const Color(0x1A009CFF),
-          borderRadius: BorderRadius.circular(6.r),
-          border: Border.all(
-            width: 1,
-            color: const Color(0xFFE5E6EB).withOpacity(0.075),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Geist Mono',
-            fontWeight: FontWeight.w600,
-            fontSize: 12.sp,
-            height: 1.2,
-            color: Colors.white,
-          ),
-        ),
-      );
-    }
-
     return _buildDraggable(
       data: label,
-      builder: buildContent,
+      builder: () {
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(
+              width: 1,
+              color: Colors.white.withOpacity(0.12),
+            ),
+            color: const Color(0x14093B5A),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.geistMono,
+              fontWeight: FontWeight.w600,
+              fontSize: 12.sp,
+              color: AppColors.white,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -921,27 +747,20 @@ class _DragFeedbackChip extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12.r),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF3F67FF),
-              Color(0xFF9C4DFF),
-            ],
-          ),
+          borderRadius: BorderRadius.circular(10.r),
+          color: const Color(0xF009253F),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF10244C).withOpacity(0.55),
+              color: const Color(0xFF0F2C46).withOpacity(0.4),
               blurRadius: 16,
               offset: const Offset(0, 10),
             ),
           ],
           border: Border.all(
-            color: Colors.white.withOpacity(0.35),
-            width: 1.2,
+            color: Colors.white.withOpacity(0.25),
+            width: 1,
           ),
         ),
         child: Text(
@@ -949,8 +768,7 @@ class _DragFeedbackChip extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Roboto',
             fontWeight: FontWeight.w600,
-            fontSize: 14.sp,
-            letterSpacing: 0.5,
+            fontSize: 13.sp,
             color: Colors.white,
           ),
         ),
