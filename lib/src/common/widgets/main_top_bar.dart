@@ -5,6 +5,7 @@ import 'package:d99_learn_data_enginnering/src/common/theme/app_images.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/app_colors.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/fonts.dart';
 import 'package:d99_learn_data_enginnering/src/services/ripple_service.dart';
+import 'package:d99_learn_data_enginnering/src/settings/page/buttons_settings.dart';
 
 class MainTopBar extends StatelessWidget {
   const MainTopBar({super.key});
@@ -48,8 +49,11 @@ class MainTopBar extends StatelessWidget {
           // Right side - Settings icon with ripple effect
           RippleService.wrapWithRipple(
             onTap: () {
-              // Handle settings tap
-              print('Settings tapped');
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const ButtonsSettingsPage(),
+                ),
+              );
             },
             borderRadius: 12.r,
             rippleColor: Colors.white.withOpacity(0.2),

@@ -3,7 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/app_images.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/fonts.dart';
+import 'package:d99_learn_data_enginnering/src/common/widgets/all_types_python_widgets.dart';
 import 'package:d99_learn_data_enginnering/src/common/widgets/glass_box.dart';
+import 'package:d99_learn_data_enginnering/src/features/python_builder/model/block_metadata.dart';
 
 class CanvasDropDetails {
   final int rowIndex;
@@ -143,7 +145,6 @@ class _RowDropTarget extends StatelessWidget {
       onWillAccept: (_) => true,
       onAccept: onDrop,
       builder: (context, candidateData, rejectedData) {
-        final bool isActive = candidateData.isNotEmpty;
         final List<String> previews =
             candidateData.whereType<String>().toList();
         final List<Widget> chipWidgets = [
@@ -352,24 +353,14 @@ class _CanvasChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextStyle textStyle = TextStyle(
-      fontFamily: AppFonts.geistMono,
-      fontWeight: FontWeight.w600,
-      fontSize: 12.sp,
-      height: 1.2,
-      color: Colors.white.withOpacity(isPreview ? 0.6 : 1),
-    );
+    Widget content = _buildChipContent();
 
-    final Widget text = Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
-      child: Text(
-        label,
-        style: textStyle,
-      ),
-    );
+    if (isPreview) {
+      content = Opacity(opacity: 0.6, child: content);
+    }
 
     if (onRemove == null || isPreview) {
-      return text;
+      return content;
     }
 
     return GestureDetector(
@@ -378,7 +369,7 @@ class _CanvasChip extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          text,
+          content,
           Positioned(
             top: -8.h,
             right: -8.w,
@@ -397,6 +388,121 @@ class _CanvasChip extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildChipContent() {
+    final Widget? specialChip = _buildSpecialChip();
+    if (specialChip != null) {
+      return specialChip;
+    }
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.geistMono,
+          fontWeight: FontWeight.w600,
+          fontSize: 12.sp,
+          height: 1.2,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget? _buildSpecialChip() {
+    final _PairConnectorDescriptor? pairDescriptor =
+        _PairConnectorDescriptor.tryParse(label);
+    if (pairDescriptor != null) {
+      return ToolBarPairConnector(
+        label: pairDescriptor.label,
+        orderText: pairDescriptor.orderText,
+      );
+    }
+    final ParameterizedBlockDescriptor? parameterizedDescriptor =
+        ParameterizedBlockSerializer.tryParse(label);
+    if (parameterizedDescriptor != null) {
+      final String originalLabel = parameterizedDescriptor.label;
+      final String upperLabel = originalLabel.toUpperCase();
+      final bool isTwoParamKeyword =
+          BlockMetadata.twoParamLabels.contains(upperLabel);
+      final bool isOperator = BlockMetadata.symbolLabels.contains(originalLabel);
+
+      if (isTwoParamKeyword || isOperator) {
+        return ToolBarTwoParameterConnector(
+          leftValue: parameterizedDescriptor.parameterAt(0) ?? 'order',
+          label: isOperator ? originalLabel : upperLabel,
+          rightValue: parameterizedDescriptor.parameterAt(1) ?? 'order',
+        );
+      }
+      return _buildOneParamChip(
+        displayLabel: upperLabel,
+        rawLabel: originalLabel,
+        parameter: parameterizedDescriptor.parameterAt(0),
+      );
+    }
+    return null;
+  }
+
+  Widget _buildOneParamChip({
+    required String displayLabel,
+    required String rawLabel,
+    required String? parameter,
+  }) {
+    final lowerParam = parameter?.toLowerCase() ?? '';
+    if (lowerParam == 'order') {
+      return ToolBarPairConnector(label: displayLabel, orderText: 'order');
+    }
+    if (lowerParam == 'orders') {
+      return ToolBarPairConnector(label: displayLabel, orderText: 'orders');
+    }
+    if (lowerParam == 'total') {
+      return ToolBarPairConnector(label: displayLabel, orderText: 'total');
+    }
+    if (BlockMetadata.digitPattern.hasMatch(lowerParam)) {
+      return ToolBarPairConnector(
+        label: displayLabel,
+        orderText: lowerParam,
+      );
+    }
+
+    return ToolBarOneParameterBox(
+      label: displayLabel,
+      parameterValue: parameter,
+    );
+  }
+}
+
+class _PairConnectorDescriptor {
+  final String label;
+  final String orderText;
+
+  const _PairConnectorDescriptor({
+    required this.label,
+    required this.orderText,
+  });
+
+  static _PairConnectorDescriptor? tryParse(String raw) {
+    final String trimmed = raw.trim();
+    if (trimmed.isEmpty) return null;
+
+    const String prefix = 'pair_connector::';
+    final String lower = trimmed.toLowerCase();
+    if (!lower.startsWith(prefix)) return null;
+
+    final String remainder = trimmed.substring(prefix.length);
+    final List<String> parts = remainder.split('::');
+    if (parts.isEmpty) return null;
+
+    final String label = parts.first.isEmpty ? 'FOR' : parts.first;
+    final String orderText =
+        parts.length > 1 && parts[1].isNotEmpty ? parts[1] : 'order';
+
+    return _PairConnectorDescriptor(
+      label: label,
+      orderText: orderText,
     );
   }
 }

@@ -13,6 +13,8 @@ import 'package:d99_learn_data_enginnering/src/features/python_builder/widget/hi
 import 'package:d99_learn_data_enginnering/src/features/python_builder/widget/run_result_popup.dart';
 import 'package:d99_learn_data_enginnering/src/features/python_builder/widget/compiled_failed_popup.dart';
 import 'package:d99_learn_data_enginnering/src/features/python_builder/widget/information_popup.dart';
+import 'package:d99_learn_data_enginnering/src/features/python_builder/widget/block_parameter_popup.dart';
+import 'package:d99_learn_data_enginnering/src/features/python_builder/model/block_metadata.dart';
 import 'package:d99_learn_data_enginnering/src/common/widgets/glass_box.dart';
 
 class PythonBuilderPage extends StatefulWidget {
@@ -136,7 +138,7 @@ class _PythonBuilderPageState extends State<PythonBuilderPage>
     }
   }
 
-  void _handleBlockDropped(String block, CanvasDropDetails details) {
+  void _insertBlock(String block, CanvasDropDetails details) {
     setState(() {
       _recordForUndo();
       final int boundedIndex = details.rowIndex < 0
@@ -154,6 +156,30 @@ class _PythonBuilderPageState extends State<PythonBuilderPage>
       }
       _redoStack.clear();
     });
+  }
+
+  void _handleBlockDropped(String block, CanvasDropDetails details) async {
+    if (block.startsWith(ParameterizedBlockSerializer.prefix)) {
+      _insertBlock(block, details);
+      return;
+    }
+
+    final BlockParameterRequirement requirement =
+        BlockMetadata.requirementFor(block);
+    if (requirement == BlockParameterRequirement.none) {
+      _insertBlock(block, details);
+      return;
+    }
+
+    final List<String>? parameters = await BlockParameterPopup.show(
+      context,
+      label: block,
+      requirement: requirement,
+    );
+    if (!mounted || parameters == null) return;
+
+    final encodedBlock = ParameterizedBlockSerializer.encode(block, parameters);
+    _insertBlock(encodedBlock, details);
   }
 
   void _removeCanvasBlock(int rowIndex, int blockIndex) {
@@ -362,39 +388,7 @@ class _PythonBuilderPageState extends State<PythonBuilderPage>
     );
   }
 
-  Widget _buildReferenceCard() {
-    return GlassBox(
-      radius: 16,
-      width: double.infinity,
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Need a hint?',
-            style: TextStyle(
-              fontFamily: 'Rubik',
-              fontWeight: FontWeight.w600,
-              fontSize: 13.sp,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            'Drag blocks like FOR, IN, IF, and += from the palette to build the solution. '
-            'Use undo or redo if you need to adjust the order of your blocks.',
-            style: TextStyle(
-              fontFamily: 'Rubik',
-              fontWeight: FontWeight.w400,
-              fontSize: 12.sp,
-              height: 1.45,
-              color: Colors.white.withOpacity(0.85),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -495,11 +489,7 @@ class _PythonBuilderPageState extends State<PythonBuilderPage>
                         onClear: _canvasRows.isNotEmpty ? _clearCanvas : null,
                       ),
                     ),
-                    SizedBox(height: 18.h),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      child: _buildReferenceCard(),
-                    ),
+                   
                     SizedBox(height: 160.h),
                   ],
                 ),

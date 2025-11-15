@@ -5,7 +5,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/app_images.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/app_colors.dart';
+import 'package:d99_learn_data_enginnering/src/common/widgets/all_types_python_widgets.dart';
 import 'package:d99_learn_data_enginnering/src/services/ripple_service.dart';
+import 'package:d99_learn_data_enginnering/src/features/python_builder/model/block_metadata.dart';
 
 class PythonBuilderToolbar extends StatefulWidget {
   final VoidCallback? onUndo;
@@ -32,6 +34,7 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
   final List<String> _tabs = [
     'Math',
     'Logic',
+    'Operators',
     'Data',
     'Strings',
     'Functions',
@@ -179,190 +182,325 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
     );
   }
 
-  Widget _buildTabsSection() {
-    return Container(
+  Widget _buildTabsSection(double height) {
+    return SizedBox(
       width: 82.w,
-      decoration: BoxDecoration(
-        color: const Color(0x05009CFF), // #009CFF05
-        border: Border(
-          right: BorderSide(
-            color: const Color(0xFFE6E6EB).withOpacity(0.04), // #E5E6EB0A
-            width: 1,
+      height: height,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0x05009CFF), // #009CFF05
+          border: Border(
+            right: BorderSide(
+              color: const Color(0xFFE6E6EB).withOpacity(0.04), // #E5E6EB0A
+              width: 1,
+            ),
           ),
         ),
-      ),
-      child: Column(
-        children:
-            _tabs
-                .asMap()
-                .entries
-                .map((entry) => _buildTabItem(entry.value, entry.key))
-                .toList(),
+        child: SingleChildScrollView(
+          child: Column(
+            children:
+                _tabs
+                    .asMap()
+                    .entries
+                    .map((entry) => _buildTabItem(entry.value, entry.key))
+                    .toList(),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildMathContent() {
-    final mathItems = ['IF', 'ELIF', 'ELSE', 'FOR', 'IN', 'WHILE'];
+    final mathItems = [
+      'SUM',
+      'MIN',
+      'MAX',
+      'ABS',
+      'ROUND',
+      'FLOOR',
+      'CEIL',
+      'POW',
+      'DIVMOD',
+      'SQRT',
+      'LOG',
+      'EXP',
+      'FACTORIAL',
+      'CLAMP',
+      'RANGE',
+      'HYPOT',
+      'COMPLEX',
+      'FRACTION',
+      'DECIMAL',
+    ];
     return _buildGridContent(mathItems);
   }
 
-  Widget _buildClauseItem(String label) {
-    Widget buildContent() {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(50.r),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0x99232834), // #23283499
-              borderRadius: BorderRadius.circular(50.r),
-              border: Border.all(
-                width: 1,
-                color: const Color(0xFFE5E6EB).withOpacity(0.101), // #E5E6EB1A
-              ),
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(6.w),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: 'Geist Mono',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.sp,
-                      height: 15 / 12,
-                      color: const Color(0xFFB9B9B9), // #B9B9B9
-                    ),
-                  ),
-                  SizedBox(width: 6.w),
-                  Container(
-                    width: 18.w,
-                    height: 18.h,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF141F2A), // #141F2A
-                      borderRadius: BorderRadius.circular(50.r),
-                      border: Border.all(
-                        width: 1,
-                        color: const Color(0xFF586067), // #586067
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xCC000000), // #000000CC
-                          offset: const Offset(0, 0),
-                          blurRadius: 4,
-                          spreadRadius: 0,
-                          blurStyle: BlurStyle.inner,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
+  Widget _buildChip(String label) {
+    final upperLabel = label.toUpperCase();
+    if (BlockMetadata.digitPattern.hasMatch(label)) {
+      return ToolBarDigitChip(text: label);
     }
+    if (BlockMetadata.symbolLabels.contains(label)) {
+      return ToolBarOperatorChip(symbol: label);
+    }
+    if (BlockMetadata.labelOnlyLabels.contains(upperLabel)) {
+      return ToolBarLabelChip(label: upperLabel);
+    }
+    if (BlockMetadata.twoParamLabels.contains(upperLabel)) {
+      return ToolBarTwoParameterBox(label: upperLabel);
+    }
+    return ToolBarOneParameterBox(label: upperLabel);
+  }
 
+  Widget _buildClauseItem(String label) {
     return _buildDraggable(
       data: label,
-      builder: buildContent,
+      builder: () => _buildChip(label),
     );
   }
 
   Widget _buildLogicContent() {
-    final logicItems = ['AND', 'OR', 'NOT', 'IF', 'ELIF', 'ELSE'];
+    final logicItems = [
+      'IF',
+      'ELIF',
+      'ELSE',
+      'MATCH',
+      'CASE',
+      'FOR',
+      'WHILE',
+      'BREAK',
+      'CONTINUE',
+      'PASS',
+      'AND',
+      'OR',
+      'NOT',
+      'IN',
+      'NOT IN',
+      'IS',
+      'IS NOT',
+      'TRUE',
+      'FALSE',
+      'NONE',
+      'ALL',
+      'ANY',
+      'BOOL',
+    ];
     return _buildGridContent(logicItems);
   }
 
+  Widget _buildOperatorsContent() {
+    return _buildGridContent(BlockMetadata.operatorTokens);
+  }
+
   Widget _buildDataContent() {
-    final dataItems = ['IN', 'IS', 'TRUE', 'FALSE', 'NONE', 'LIST'];
+    final dataItems = [
+      'LIST',
+      'TUPLE',
+      'DICT',
+      'SET',
+      'FROZENSET',
+      'RANGE',
+      'ENUMERATE',
+      'ZIP',
+      'MAP',
+      'FILTER',
+      'SORTED',
+      'REVERSED',
+      'SLICE',
+      'APPEND',
+      'EXTEND',
+      'INSERT',
+      'POP',
+      'REMOVE',
+      'CLEAR',
+      'COPY',
+      'UPDATE',
+      'ITEMS',
+      'VALUES',
+      'KEYS',
+      'DEFAULTDICT',
+      'COUNTER',
+      'GROUPBY',
+    ];
     return _buildGridContent(dataItems);
   }
 
   Widget _buildStringsContent() {
-    final stringItems = ['IN', 'IS', 'TRUE', 'STR', 'LEN', 'SPLIT'];
+    final stringItems = [
+      'STR',
+      'LEN',
+      'SPLIT',
+      'JOIN',
+      'FORMAT',
+      'FSTRING',
+      'LOWER',
+      'UPPER',
+      'TITLE',
+      'STRIP',
+      'REPLACE',
+      'STARTSWITH',
+      'ENDSWITH',
+      'FIND',
+      'COUNT',
+      'SLICE',
+      'ENCODE',
+      'DECODE',
+      'REGEX',
+      'SUB',
+    ];
     return _buildGridContent(stringItems);
   }
 
   Widget _buildFunctionsContent() {
-    final funcItems = ['FALSE', 'NONE', 'BREAK', 'CONTINUE', 'DEF', 'RETURN'];
+    final funcItems = [
+      'DEF',
+      'RETURN',
+      'LAMBDA',
+      'YIELD',
+      'YIELD FROM',
+      'ASYNC',
+      'AWAIT',
+      'GLOBAL',
+      'NONLOCAL',
+      'DECORATOR',
+      'CALLABLE',
+      'ARGS',
+      'KWARGS',
+      'IMPORT',
+      'FROM',
+      'AS',
+      'WITH',
+      'PASS',
+      'ASSERT',
+      'RAISE',
+      'DOCSTRING',
+    ];
     return _buildGridContent(funcItems);
   }
 
   Widget _buildItertoolsContent() {
-    final List<String> itertoolsItems = ['PASS', 'ITER', 'NEXT', 'RANGE', 'ZIP', 'MAP'];
+    final List<String> itertoolsItems = [
+      'ITER',
+      'NEXT',
+      'RANGE',
+      'ZIP',
+      'MAP',
+      'FILTER',
+      'CHAIN',
+      'CYCLE',
+      'PRODUCT',
+      'PERMUTATIONS',
+      'COMBINATIONS',
+      'ACCUMULATE',
+      'GROUPBY',
+      'COUNT',
+      'ISLICE',
+      'TAKEWHILE',
+      'DROPWHILE',
+      'ENUMERATE',
+      'LISTCOMPREHENSION',
+      'GENEXPR',
+    ];
     return _buildGridContent(itertoolsItems);
   }
 
   Widget _buildErrorsContent() {
-    final List<String> errorItems = ['TRY', 'EXCEPT', 'FINALLY', 'RAISE', 'ASSERT', 'ERROR'];
+    final List<String> errorItems = [
+      'TRY',
+      'EXCEPT',
+      'FINALLY',
+      'ELSE',
+      'RAISE',
+      'ASSERT',
+      'ERROR',
+      'WARNING',
+      'VALUEERROR',
+      'TYPEERROR',
+      'KEYERROR',
+      'INDEXERROR',
+      'IOERROR',
+      'IMPORTERROR',
+      'ATTRIBUTEERROR',
+      'RUNTIMEERROR',
+      'TRACEBACK',
+      'LOG',
+    ];
     return _buildGridContent(errorItems);
   }
 
   Widget _buildVariablesContent() {
-    final List<String> variableItems = ['VAR', 'INT', 'FLOAT', 'BOOL', 'DICT', 'TUPLE'];
+    final List<String> variableItems = [
+      'VAR',
+      'INT',
+      'FLOAT',
+      'BOOL',
+      'STR',
+      'LIST',
+      'DICT',
+      'SET',
+      'TUPLE',
+      'CONST',
+      'CLASS',
+      'SELF',
+      'INIT',
+      'ATTRIBUTE',
+      'PROPERTY',
+      'STATIC',
+      'CLASSMETHOD',
+      'DATACLASS',
+      'TYPEHINT',
+      'OPTIONAL',
+      'UNION',
+      'TYPEVAR',
+    ];
     return _buildGridContent(variableItems);
   }
 
   Widget _buildGridContent(List<String> items) {
-    if (items.isEmpty) {
-      return const SizedBox();
-    }
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    if (items.isEmpty) return const SizedBox();
+    return Padding(
       padding: EdgeInsets.all(17.w),
-      itemCount: (items.length / 3).ceil(),
-      itemBuilder: (context, rowIndex) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: 6.h),
-          child: Row(
-            children: [
-              // First item in row
-              _buildClauseItem(items[rowIndex * 3]),
-              SizedBox(width: 6.w),
-              // Second item in row (if exists)
-              if (rowIndex * 3 + 1 < items.length)
-                _buildClauseItem(items[rowIndex * 3 + 1]),
-              SizedBox(width: 6.w),
-              // Third item in row (if exists)
-              if (rowIndex * 3 + 2 < items.length)
-                _buildClauseItem(items[rowIndex * 3 + 2]),
-            ],
-          ),
-        );
-      },
+      child: Wrap(
+        spacing: 6.w,
+        runSpacing: 6.h,
+        children: items.map(_buildClauseItem).toList(),
+      ),
     );
   }
 
-  Widget _buildContentSection() {
+  Widget _buildContentSection(double height) {
+    Widget content =
+        _selectedTabIndex == 0
+            ? _buildMathContent()
+            : _selectedTabIndex == 1
+                ? _buildLogicContent()
+                : _selectedTabIndex == 2
+                    ? _buildOperatorsContent()
+                    : _selectedTabIndex == 3
+                        ? _buildDataContent()
+                        : _selectedTabIndex == 4
+                            ? _buildStringsContent()
+                            : _selectedTabIndex == 5
+                                ? _buildFunctionsContent()
+                                : _selectedTabIndex == 6
+                                    ? _buildItertoolsContent()
+                                    : _selectedTabIndex == 7
+                                        ? _buildErrorsContent()
+                                        : _selectedTabIndex == 8
+                                            ? _buildVariablesContent()
+                                            : const SizedBox();
+
     return Expanded(
       child: Container(
         decoration: BoxDecoration(
           // color: const Color(0x05009CFF), // #009CFF05
         ),
-        child:
-            _selectedTabIndex == 0
-                ? _buildMathContent()
-                : _selectedTabIndex == 1
-                ? _buildLogicContent()
-                : _selectedTabIndex == 2
-                ? _buildDataContent()
-                : _selectedTabIndex == 3
-                ? _buildStringsContent()
-                : _selectedTabIndex == 4
-                ? _buildFunctionsContent()
-                : _selectedTabIndex == 5
-                ? _buildItertoolsContent()
-                : _selectedTabIndex == 6
-                ? _buildErrorsContent()
-                : _selectedTabIndex == 7
-                ? _buildVariablesContent()
-                : const SizedBox(),
+        child: SizedBox(
+          height: height,
+          child: SingleChildScrollView(
+            child: content,
+          ),
+        ),
       ),
     );
   }
@@ -611,6 +749,8 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
 
   @override
   Widget build(BuildContext context) {
+    final double toolbarBodyHeight = 320.h;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -638,6 +778,7 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
         ),
         // Bottom section - Tabs and Content
         Container(
+          height: toolbarBodyHeight,
           decoration: BoxDecoration(
             image: DecorationImage(
               image: AssetImage(AppImages.tabsContainer),
@@ -648,9 +789,9 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Left tabs section
-              _buildTabsSection(),
+              _buildTabsSection(toolbarBodyHeight),
               // Right content section
-              _buildContentSection(),
+              _buildContentSection(toolbarBodyHeight),
             ],
           ),
         ),
@@ -694,6 +835,7 @@ class _PythonDragFeedbackChip extends StatelessWidget {
         ),
         child: Text(
           label,
+          
           style: TextStyle(
             fontFamily: 'Roboto',
             fontWeight: FontWeight.w600,
