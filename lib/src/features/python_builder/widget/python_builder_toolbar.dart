@@ -6,14 +6,21 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/app_images.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/app_colors.dart';
 import 'package:d99_learn_data_enginnering/src/common/widgets/all_types_python_widgets.dart';
+import 'package:d99_learn_data_enginnering/src/common/widgets/glass_box.dart';
 import 'package:d99_learn_data_enginnering/src/services/ripple_service.dart';
 import 'package:d99_learn_data_enginnering/src/features/python_builder/model/block_metadata.dart';
+import 'package:d99_learn_data_enginnering/src/features/python_builder/model/python_builder_drag_data.dart';
+import 'package:d99_learn_data_enginnering/src/features/python_builder/model/python_builder_config.dart';
+import 'package:d99_learn_data_enginnering/src/features/python_builder/model/python_canvas_token.dart';
 
 class PythonBuilderToolbar extends StatefulWidget {
   final VoidCallback? onUndo;
   final VoidCallback? onRedo;
   final VoidCallback? onTableIcon;
   final VoidCallback? onRun;
+  final bool tableViewActive;
+  final Widget? bottomContent;
+  final bool showTableIcon;
 
   const PythonBuilderToolbar({
     super.key,
@@ -21,6 +28,9 @@ class PythonBuilderToolbar extends StatefulWidget {
     this.onRedo,
     this.onTableIcon,
     this.onRun,
+    this.tableViewActive = false,
+    this.bottomContent,
+    this.showTableIcon = true,
   });
 
   @override
@@ -28,7 +38,6 @@ class PythonBuilderToolbar extends StatefulWidget {
 }
 
 class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
-  bool _isTableIconClicked = false;
   int _selectedTabIndex = 0;
 
   final List<String> _tabs = [
@@ -44,18 +53,23 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
   ];
 
   Widget _buildDraggable({
-    required String data,
+    required String label,
+    required PythonCanvasTokenKind kind,
     required Widget Function() builder,
+    String? literalType,
   }) {
     final Widget chip = builder();
-    return LongPressDraggable<String>(
-      data: data,
+    final PythonBuilderDragData payload = PythonBuilderDragData(
+      label: label,
+      kind: kind,
+      literalType: literalType,
+    );
+
+    return Draggable<PythonBuilderDragData>(
+      data: payload,
       dragAnchorStrategy: pointerDragAnchorStrategy,
-      feedback: _PythonDragFeedbackChip(label: data),
-      childWhenDragging: Opacity(
-        opacity: 0.35,
-        child: chip,
-      ),
+      feedback: _PythonDragFeedbackChip(label: label),
+      childWhenDragging: Opacity(opacity: 0.35, child: chip),
       child: chip,
     );
   }
@@ -82,12 +96,15 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
                   width: 1,
                 ),
                 right: BorderSide.none,
-                bottom: index < _tabs.length - 1
-                    ? BorderSide(
-                        color: const Color(0xFFE6E6EB).withOpacity(0.04), // #E5E6EB0A
-                        width: 1,
-                      )
-                    : BorderSide.none,
+                bottom:
+                    index < _tabs.length - 1
+                        ? BorderSide(
+                          color: const Color(
+                            0xFFE6E6EB,
+                          ).withOpacity(0.04), // #E5E6EB0A
+                          width: 1,
+                        )
+                        : BorderSide.none,
                 left: BorderSide(
                   color: const Color(0xFFE5E6EB).withOpacity(0.1),
                   width: 1,
@@ -211,32 +228,19 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
   }
 
   Widget _buildMathContent() {
-    final mathItems = [
-      'SUM',
-      'MIN',
-      'MAX',
-      'ABS',
-      'ROUND',
-      'FLOOR',
-      'CEIL',
-      'POW',
-      'DIVMOD',
-      'SQRT',
-      'LOG',
-      'EXP',
-      'FACTORIAL',
-      'CLAMP',
-      'RANGE',
-      'HYPOT',
-      'COMPLEX',
-      'FRACTION',
-      'DECIMAL',
-    ];
+    // Use config to get math items
+    final mathItems = PythonBuilderDefaults.itemsFor(PythonToolbarTabKind.math);
     return _buildGridContent(mathItems);
   }
 
   Widget _buildChip(String label) {
     final upperLabel = label.toUpperCase();
+    
+    // Special handling for table names (keep lowercase)
+    if (label == 'orders' || label == 'customers') {
+      return ToolBarLabelChip(label: label); // Keep lowercase for table names
+    }
+    
     if (BlockMetadata.digitPattern.hasMatch(label)) {
       return ToolBarDigitChip(text: label);
     }
@@ -253,38 +257,19 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
   }
 
   Widget _buildClauseItem(String label) {
+    final PythonCanvasTokenKind kind = PythonBuilderDefaults.kindFor(label);
     return _buildDraggable(
-      data: label,
+      label: label,
+      kind: kind,
       builder: () => _buildChip(label),
     );
   }
 
   Widget _buildLogicContent() {
-    final logicItems = [
-      'IF',
-      'ELIF',
-      'ELSE',
-      'MATCH',
-      'CASE',
-      'FOR',
-      'WHILE',
-      'BREAK',
-      'CONTINUE',
-      'PASS',
-      'AND',
-      'OR',
-      'NOT',
-      'IN',
-      'NOT IN',
-      'IS',
-      'IS NOT',
-      'TRUE',
-      'FALSE',
-      'NONE',
-      'ALL',
-      'ANY',
-      'BOOL',
-    ];
+    // Use config to get logic items
+    final logicItems = PythonBuilderDefaults.itemsFor(
+      PythonToolbarTabKind.logic,
+    );
     return _buildGridContent(logicItems);
   }
 
@@ -293,166 +278,44 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
   }
 
   Widget _buildDataContent() {
-    final dataItems = [
-      'LIST',
-      'TUPLE',
-      'DICT',
-      'SET',
-      'FROZENSET',
-      'RANGE',
-      'ENUMERATE',
-      'ZIP',
-      'MAP',
-      'FILTER',
-      'SORTED',
-      'REVERSED',
-      'SLICE',
-      'APPEND',
-      'EXTEND',
-      'INSERT',
-      'POP',
-      'REMOVE',
-      'CLEAR',
-      'COPY',
-      'UPDATE',
-      'ITEMS',
-      'VALUES',
-      'KEYS',
-      'DEFAULTDICT',
-      'COUNTER',
-      'GROUPBY',
-    ];
+    // Use config to get data items (includes SQL keywords)
+    final dataItems = PythonBuilderDefaults.itemsFor(PythonToolbarTabKind.data);
     return _buildGridContent(dataItems);
   }
 
   Widget _buildStringsContent() {
-    final stringItems = [
-      'STR',
-      'LEN',
-      'SPLIT',
-      'JOIN',
-      'FORMAT',
-      'FSTRING',
-      'LOWER',
-      'UPPER',
-      'TITLE',
-      'STRIP',
-      'REPLACE',
-      'STARTSWITH',
-      'ENDSWITH',
-      'FIND',
-      'COUNT',
-      'SLICE',
-      'ENCODE',
-      'DECODE',
-      'REGEX',
-      'SUB',
-    ];
+    // Use config to get string items
+    final stringItems = PythonBuilderDefaults.itemsFor(
+      PythonToolbarTabKind.strings,
+    );
     return _buildGridContent(stringItems);
   }
 
   Widget _buildFunctionsContent() {
-    final funcItems = [
-      'DEF',
-      'RETURN',
-      'LAMBDA',
-      'YIELD',
-      'YIELD FROM',
-      'ASYNC',
-      'AWAIT',
-      'GLOBAL',
-      'NONLOCAL',
-      'DECORATOR',
-      'CALLABLE',
-      'ARGS',
-      'KWARGS',
-      'IMPORT',
-      'FROM',
-      'AS',
-      'WITH',
-      'PASS',
-      'ASSERT',
-      'RAISE',
-      'DOCSTRING',
-    ];
+    // Use config to get function items (includes SQL execution functions)
+    final funcItems = PythonBuilderDefaults.itemsFor(
+      PythonToolbarTabKind.functions,
+    );
     return _buildGridContent(funcItems);
   }
 
   Widget _buildItertoolsContent() {
-    final List<String> itertoolsItems = [
-      'ITER',
-      'NEXT',
-      'RANGE',
-      'ZIP',
-      'MAP',
-      'FILTER',
-      'CHAIN',
-      'CYCLE',
-      'PRODUCT',
-      'PERMUTATIONS',
-      'COMBINATIONS',
-      'ACCUMULATE',
-      'GROUPBY',
-      'COUNT',
-      'ISLICE',
-      'TAKEWHILE',
-      'DROPWHILE',
-      'ENUMERATE',
-      'LISTCOMPREHENSION',
-      'GENEXPR',
-    ];
+    // Use config to get itertools items
+    final List<String> itertoolsItems = PythonBuilderDefaults.itemsFor(PythonToolbarTabKind.itertools);
     return _buildGridContent(itertoolsItems);
   }
 
   Widget _buildErrorsContent() {
-    final List<String> errorItems = [
-      'TRY',
-      'EXCEPT',
-      'FINALLY',
-      'ELSE',
-      'RAISE',
-      'ASSERT',
-      'ERROR',
-      'WARNING',
-      'VALUEERROR',
-      'TYPEERROR',
-      'KEYERROR',
-      'INDEXERROR',
-      'IOERROR',
-      'IMPORTERROR',
-      'ATTRIBUTEERROR',
-      'RUNTIMEERROR',
-      'TRACEBACK',
-      'LOG',
-    ];
+    // Use config to get error items
+    final List<String> errorItems = PythonBuilderDefaults.itemsFor(PythonToolbarTabKind.errors);
     return _buildGridContent(errorItems);
   }
 
   Widget _buildVariablesContent() {
-    final List<String> variableItems = [
-      'VAR',
-      'INT',
-      'FLOAT',
-      'BOOL',
-      'STR',
-      'LIST',
-      'DICT',
-      'SET',
-      'TUPLE',
-      'CONST',
-      'CLASS',
-      'SELF',
-      'INIT',
-      'ATTRIBUTE',
-      'PROPERTY',
-      'STATIC',
-      'CLASSMETHOD',
-      'DATACLASS',
-      'TYPEHINT',
-      'OPTIONAL',
-      'UNION',
-      'TYPEVAR',
-    ];
+    // Use config to get variable items (includes table names: orders, customers)
+    final List<String> variableItems = PythonBuilderDefaults.itemsFor(
+      PythonToolbarTabKind.variables,
+    );
     return _buildGridContent(variableItems);
   }
 
@@ -473,22 +336,22 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
         _selectedTabIndex == 0
             ? _buildMathContent()
             : _selectedTabIndex == 1
-                ? _buildLogicContent()
-                : _selectedTabIndex == 2
-                    ? _buildOperatorsContent()
-                    : _selectedTabIndex == 3
-                        ? _buildDataContent()
-                        : _selectedTabIndex == 4
-                            ? _buildStringsContent()
-                            : _selectedTabIndex == 5
-                                ? _buildFunctionsContent()
-                                : _selectedTabIndex == 6
-                                    ? _buildItertoolsContent()
-                                    : _selectedTabIndex == 7
-                                        ? _buildErrorsContent()
-                                        : _selectedTabIndex == 8
-                                            ? _buildVariablesContent()
-                                            : const SizedBox();
+            ? _buildLogicContent()
+            : _selectedTabIndex == 2
+            ? _buildOperatorsContent()
+            : _selectedTabIndex == 3
+            ? _buildDataContent()
+            : _selectedTabIndex == 4
+            ? _buildStringsContent()
+            : _selectedTabIndex == 5
+            ? _buildFunctionsContent()
+            : _selectedTabIndex == 6
+            ? _buildItertoolsContent()
+            : _selectedTabIndex == 7
+            ? _buildErrorsContent()
+            : _selectedTabIndex == 8
+            ? _buildVariablesContent()
+            : const SizedBox();
 
     return Expanded(
       child: Container(
@@ -497,9 +360,7 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
         ),
         child: SizedBox(
           height: height,
-          child: SingleChildScrollView(
-            child: content,
-          ),
+          child: SingleChildScrollView(child: content),
         ),
       ),
     );
@@ -609,12 +470,13 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
       children: [
         // Left section - Undo and Redo icons
         GestureDetector(
-          onTap: undoEnabled
-              ? () {
-                  HapticFeedback.lightImpact();
-                  widget.onUndo?.call();
-                }
-              : null,
+          onTap:
+              undoEnabled
+                  ? () {
+                    HapticFeedback.lightImpact();
+                    widget.onUndo?.call();
+                  }
+                  : null,
           child: Opacity(
             opacity: undoEnabled ? 1.0 : 0.35,
             child: SvgPicture.asset(
@@ -630,12 +492,13 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
         ),
         SizedBox(width: 8.w),
         GestureDetector(
-          onTap: redoEnabled
-              ? () {
-                  HapticFeedback.lightImpact();
-                  widget.onRedo?.call();
-                }
-              : null,
+          onTap:
+              redoEnabled
+                  ? () {
+                    HapticFeedback.lightImpact();
+                    widget.onRedo?.call();
+                  }
+                  : null,
           child: Opacity(
             opacity: redoEnabled ? 1.0 : 0.35,
             child: SvgPicture.asset(
@@ -655,9 +518,6 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
         GestureDetector(
           onTap: () {
             HapticFeedback.lightImpact();
-            setState(() {
-              _isTableIconClicked = !_isTableIconClicked;
-            });
             widget.onTableIcon?.call();
           },
           child: ClipRRect(
@@ -681,12 +541,12 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(6.r),
                         child: SvgPicture.asset(
-                          _isTableIconClicked
+                          widget.tableViewActive
                               ? AppIcons.tableIconClick
                               : AppIcons.tableicon,
                           fit: BoxFit.cover,
                           colorFilter:
-                              _isTableIconClicked
+                              widget.tableViewActive
                                   ? null // No color filter for clicked icon
                                   : const ColorFilter.mode(
                                     AppColors.white,
@@ -776,7 +636,7 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
             ),
           ),
         ),
-        // Bottom section - Tabs and Content
+        // Bottom section - Tabs and Content (or Table Results)
         Container(
           height: toolbarBodyHeight,
           decoration: BoxDecoration(
@@ -785,14 +645,28 @@ class _PythonBuilderToolbarState extends State<PythonBuilderToolbar> {
               fit: BoxFit.cover,
             ),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left tabs section
-              _buildTabsSection(toolbarBodyHeight),
-              // Right content section
-              _buildContentSection(toolbarBodyHeight),
-            ],
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            child:
+                widget.bottomContent != null
+                    ? KeyedSubtree(
+                      key: const ValueKey<String>('toolbar-custom-content'),
+                      child: widget.bottomContent!,
+                    )
+                    : KeyedSubtree(
+                      key: const ValueKey<String>('toolbar-default-content'),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Left tabs section
+                          _buildTabsSection(toolbarBodyHeight),
+                          // Right content section
+                          _buildContentSection(toolbarBodyHeight),
+                        ],
+                      ),
+                    ),
           ),
         ),
       ],
@@ -807,42 +681,45 @@ class _PythonDragFeedbackChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double textScaleFactor =
+        MediaQuery.maybeOf(context)?.textScaleFactor ?? 1.0;
+
+    final TextStyle baseStyle = TextStyle(
+      fontFamily: 'Roboto',
+      fontSize: 14.sp,
+      fontWeight: FontWeight.w600,
+      height: 1.2,
+      color: Colors.white,
+    );
+
+    final TextPainter painter = TextPainter(
+      text: TextSpan(text: label, style: baseStyle),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+      textScaleFactor: textScaleFactor,
+    )..layout(maxWidth: double.infinity);
+
+    final double horizontalPadding = 9.w;
+    final double verticalPadding = 3.h;
+    final double chipWidth = painter.width + horizontalPadding * 2 + 2;
+
     return Material(
       color: Colors.transparent,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12.r),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF4BEDC2),
-              Color(0xFF67A6FF),
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0B253C).withOpacity(0.55),
-              blurRadius: 16,
-              offset: const Offset(0, 10),
-            ),
-          ],
-          border: Border.all(
-            color: Colors.white.withOpacity(0.35),
-            width: 1.2,
-          ),
+      child: GlassBox(
+        width: chipWidth,
+        radius: 6,
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: verticalPadding,
         ),
+        backgroundOpacity: 0.12,
+        edgeOpacity: 0.25,
         child: Text(
           label,
-          
-          style: TextStyle(
-            fontFamily: 'Roboto',
-            fontWeight: FontWeight.w600,
-            fontSize: 14.sp,
-            letterSpacing: 0.5,
-            color: Colors.white,
-          ),
+          style: baseStyle,
+          maxLines: 1,
+          overflow: TextOverflow.visible,
+          softWrap: false,
         ),
       ),
     );

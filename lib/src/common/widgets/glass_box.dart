@@ -11,6 +11,9 @@ class GlassBox extends StatelessWidget {
     this.height,
     this.padding,
     this.radius,
+    this.backgroundOpacity = 0.02,
+    this.edgeOpacity = 0.6,
+    this.backgroundColorOverride,
   });
 
   final Widget child;
@@ -18,6 +21,9 @@ class GlassBox extends StatelessWidget {
   final double? height;
   final EdgeInsetsGeometry? padding;
   final double? radius;
+  final double backgroundOpacity;
+  final double edgeOpacity;
+  final Color? backgroundColorOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +31,13 @@ class GlassBox extends StatelessWidget {
     final double boxWidth = width ?? 320.w;
     final double? boxHeight = height;
     const Color tintBase = Color(0xFF68C5FF);
-    final Color edgeLightColor = Colors.white.withOpacity(0.6);
-    final Color topCornerColor = Colors.white.withOpacity(0.8);
-    final Color bottomCornerColor = Colors.white.withOpacity(0.8);
+    final Color effectiveColor = backgroundColorOverride ?? tintBase;
+    final double clampedBackgroundOpacity = backgroundOpacity.clamp(0.0, 1.0);
+    final double clampedEdgeOpacity = edgeOpacity.clamp(0.0, 1.0);
+    final double cornerOpacity = (clampedEdgeOpacity + 0.2).clamp(0.0, 1.0);
+    final Color edgeLightColor = Colors.white.withOpacity(clampedEdgeOpacity);
+    final Color topCornerColor = Colors.white.withOpacity(cornerOpacity);
+    final Color bottomCornerColor = Colors.white.withOpacity(cornerOpacity);
 
     return Container(
       width: boxWidth,
@@ -61,7 +71,7 @@ class GlassBox extends StatelessWidget {
             child: Container(
               padding: padding ?? EdgeInsets.all(16.w),
               alignment: Alignment.center,
-              color: tintBase.withOpacity(0.02),
+              color: effectiveColor.withOpacity(clampedBackgroundOpacity),
               child: child,
             ),
           ),

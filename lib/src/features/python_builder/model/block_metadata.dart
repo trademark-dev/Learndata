@@ -23,6 +23,7 @@ class BlockMetadata {
     'CASE',
     'MATCH',
     'YIELD FROM',
+    'order'
   };
 
   static const Set<String> labelOnlyLabels = {

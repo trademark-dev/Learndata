@@ -250,6 +250,10 @@ class ToolBarLabelChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Special handling for table names (keep lowercase)
+    final bool isTableName = label == 'orders' || label == 'customers';
+    final String displayLabel = isTableName ? label : label.toUpperCase();
+    
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
       decoration: BoxDecoration(
@@ -261,7 +265,7 @@ class ToolBarLabelChip extends StatelessWidget {
         ),
       ),
       child: Text(
-        label.toUpperCase(),
+        displayLabel,
         style: TextStyle(
           fontFamily: AppFonts.geistMono,
           fontWeight: FontWeight.w700,

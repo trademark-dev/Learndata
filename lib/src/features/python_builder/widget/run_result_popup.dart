@@ -6,15 +6,22 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:d99_learn_data_enginnering/src/common/theme/app_images.dart';
 import 'package:d99_learn_data_enginnering/src/services/ripple_service.dart';
 import 'package:d99_learn_data_enginnering/src/common/widgets/glass_box.dart';
+import 'package:d99_learn_data_enginnering/src/services/local_python_executor.dart';
 
 class RunResultPopup extends StatefulWidget {
   final VoidCallback? onClose;
   final VoidCallback? onShowCompiledFailed;
+  final String status; // 'RUNNING', 'COMPILATION SUCCESSFUL', 'COMPILATION FAILED'
+  final PythonExecutionResult? executionResult;
+  final bool isExecuting;
 
   const RunResultPopup({
     super.key,
     this.onClose,
     this.onShowCompiledFailed,
+    this.status = 'COMPILATION SUCCESSFUL',
+    this.executionResult,
+    this.isExecuting = false,
   });
 
   @override
@@ -56,14 +63,30 @@ class _RunResultPopupState extends State<RunResultPopup> {
                           // Left side - Icon and text
                           Row(
                             children: [
-                              SvgPicture.asset(
-                                AppIcons.blurTick,
-                                width: 16.w,
-                                height: 16.h,
-                              ),
+                              if (widget.status == 'RUNNING')
+                                SizedBox(
+                                  width: 16.w,
+                                  height: 16.h,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              else if (widget.status == 'COMPILATION SUCCESSFUL')
+                                SvgPicture.asset(
+                                  AppIcons.blurTick,
+                                  width: 16.w,
+                                  height: 16.h,
+                                )
+                              else
+                                SvgPicture.asset(
+                                  AppIcons.blurTick, // Use error icon if available
+                                  width: 16.w,
+                                  height: 16.h,
+                                ),
                               SizedBox(width: 5.w),
                               Text(
-                                'COMPILATION SUCCESSFUL',
+                                widget.status,
                                 style: TextStyle(
                                   fontFamily: 'Roboto',
                                   fontWeight: FontWeight.w500,
@@ -75,10 +98,12 @@ class _RunResultPopupState extends State<RunResultPopup> {
                               ),
                             ],
                           ),
-                          // Right side - Steps text
+                          // Right side - Steps text (show row count if available)
                           const Spacer(),
                           Text(
-                            'STEPS 0/17',
+                            widget.executionResult != null && widget.executionResult!.hasRows
+                                ? 'ROWS ${widget.executionResult!.rows.length}'
+                                : 'STEPS 0/17',
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontWeight: FontWeight.w500,
@@ -120,7 +145,7 @@ class _RunResultPopupState extends State<RunResultPopup> {
                         ],
                       ),
                       SizedBox(height: 14.h),
-                      // Row with 2 columns
+                      // Row with 2 columns (table is shown in toolbar's bottomContent, not here)
                       Row(
                         children: [
                           // Left column - EDITOR button
